@@ -1,4 +1,5 @@
-import React, { FC } from "react";
+'use client';
+import React, { FC, use } from "react";
 import facebookSvg from "@/images/Facebook.svg";
 import twitterSvg from "@/images/Twitter.svg";
 import googleSvg from "@/images/Google.svg";
@@ -6,6 +7,35 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
+import axios from "axios";
+import { OAUTH2_URL_GOOGLE } from "@/data/navigation";
+
+function handleClick() {
+  // e.preventDefault();
+  console.log('The link was clicked.');
+}
+
+function handleGoogleLogin() {
+    debugger;
+    axios
+      .get(OAUTH2_URL_GOOGLE + "?loginType=google")
+      .then((response) => {
+        if (response.data && response.data.data) {        
+          console.log(response);
+          debugger;
+  
+          var data = response.data;
+          var code = data.code;
+          if (code == 200) {
+            var path = data.data;
+            window.location = path;
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Lỗi khi gọi API: ", error);
+      });
+  };
 
 const loginSocials = [
   {
@@ -22,10 +52,11 @@ const loginSocials = [
     name: "Continue with Google",
     href: "#",
     icon: googleSvg,
+    onclick: handleGoogleLogin,
   },
 ];
 
-const PageLogin = () => {
+const PageLogin = () => {  
   return (
     <div className={`nc-PageLogin`} data-nc-id="PageLogin">
       <div className="container mb-24 lg:mb-32">
@@ -39,6 +70,7 @@ const PageLogin = () => {
                 key={index}
                 href={item.href}
                 className="flex w-full rounded-lg bg-primary-50 dark:bg-neutral-800 px-4 py-3 transform transition-transform sm:px-6 hover:translate-y-[-2px]"
+                onClick={item.onclick}
               >
                 <Image
                   className="flex-shrink-0"
