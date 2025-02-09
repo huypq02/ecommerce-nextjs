@@ -267,3 +267,7 @@ export const NAVIGATION_DEMO_2: NavItemType[] = [
     children: OTHER_PAGE_CHILD,
   },
 ];
+
+export const BACKEND_BASE_URL = "http://localhost:8080";
+export const OAUTH2_URL_GOOGLE = BACKEND_BASE_URL + "/user/auth/social";
+export const OAUTH2_URL_GOOGLE_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
