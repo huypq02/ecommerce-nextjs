@@ -10,19 +10,12 @@ import Link from "next/link";
 import axios from "axios";
 import { OAUTH2_URL_GOOGLE } from "@/data/navigation";
 
-function handleClick() {
-  // e.preventDefault();
-  console.log('The link was clicked.');
-}
-
 function handleGoogleLogin() {
-    debugger;
     axios
       .get(OAUTH2_URL_GOOGLE + "?loginType=google")
       .then((response) => {
         if (response.data && response.data.data) {        
           console.log(response);
-          debugger;
   
           var data = response.data;
           var code = data.code;
