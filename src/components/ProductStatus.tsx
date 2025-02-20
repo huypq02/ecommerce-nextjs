@@ -8,7 +8,7 @@ import React, { FC } from "react";
 import IconDiscount from "./IconDiscount";
 
 interface Props {
-  status: Product["status"];
+  status?: string;
   className?: string;
 }
 

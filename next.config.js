@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: true,
     typedRoutes: true,
   },
   images: {
@@ -18,8 +17,15 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8080",
+        pathname: "/download/**",
+      }
     ],
-  },
+  }
 };
 
 module.exports = nextConfig;
+
