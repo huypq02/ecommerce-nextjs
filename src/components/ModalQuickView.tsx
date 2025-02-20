@@ -6,15 +6,19 @@ import ButtonClose from "@/shared/ButtonClose/ButtonClose";
 import ProductQuickView from "./ProductQuickView";
 import ProductQuickView2 from "./ProductQuickView2";
 import { usePathname } from "next/navigation";
+import { ProductExtend } from "@/app/collection/page";
+import { PRODUCTS } from "@/data/data";
 
 export interface ModalQuickViewProps {
   show: boolean;
   onCloseModalQuickView: () => void;
+  data: ProductExtend;
 }
 
 const ModalQuickView: FC<ModalQuickViewProps> = ({
   show,
   onCloseModalQuickView,
+  data
 }) => {
   const pathname = usePathname();
 
@@ -61,11 +65,7 @@ const ModalQuickView: FC<ModalQuickViewProps> = ({
                 </span>
 
                 <div className="flex-1 overflow-y-auto rounded-xl hiddenScrollbar">
-                  {pathname.includes("/home-2") ? (
-                    <ProductQuickView2 />
-                  ) : (
-                    <ProductQuickView />
-                  )}
+                    <ProductQuickView data={data} />
                 </div>
               </div>
             </div>
