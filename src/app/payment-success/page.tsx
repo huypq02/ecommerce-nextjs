@@ -11,60 +11,33 @@ const PaymentSuccess = () => {
     let transactionId = searchParams.get("transactionId");
 
     useEffect(() => {
-        let orderData = {
-            orderDetail: [
-                {
-                    quantity: 200,
-                    price: 200,
-                    color: "Black",
-                    size: "S"
-                } ,
-                {
-                    quantity: 200,
-                    price: 200,
-                    color: "White",
-                    size: "S"
-                }
-            ],
-            orderStatusHistory: [
-                {
-                    date: "21-02-2025",
-                    status: "paid"
-                },
-                {
-                    date: "21-02-2025",
-                    status: "draf"
-                }
-            ],
-            fullName: "fullName",
-            phone: "phone",
-            address: "address",
-            postalCode: "postalCode",
-            city: "city",
-            country: "country",
-            province: "provice",
-            apt: "apt",
-            transactionId: transactionId,
-            date: "21-02-2025",
-            paymentMethod: "card",
-            status: "paid",
-            shippingFee: 200,
-            tax: 200,
-            discount: 0,
-            total: 400
+        let orderData = localStorage.getItem("orderData");
+        let orderStatusHistory = [
+            {
+                date: "21-02-2025",
+                status: "paid"
+            },
+            {
+                date: "21-02-2025",
+                status: "draf"
+            }
+        ];
+        orderData = {
+            ...orderData,
+            orderStatusHistory: orderStatusHistory,
+            transactionId: transactionId
         };
-
         axios
             .post(`${PAYMENT_SUCCESS_URL}`, {
                 orderData
             })
             .then((response) => {
                 if (response.data && response.data.data) {
-                var data = response.data;
-                var code = data.code;
-                if (code == 200) {
-                    window.location.href = "/collection";
-                }
+                    var data = response.data;
+                    var code = data.code;
+                    if (code == 200) {
+                        window.location.href = "/collection";
+                    }
                 }
             })
             .catch((error) => {

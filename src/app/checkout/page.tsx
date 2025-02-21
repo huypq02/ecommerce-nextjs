@@ -25,16 +25,50 @@ const CheckoutPage = () => {
     }, 80);
   };
 
+  //Amount money
   let subTotal = 0;
   let amount = 0;
   const tax = 24.9;
   const ship = 5;
+
+  //Order informations
+  let userInfo = {
+    fullName: "fullName",
+    phone: "phone",
+    address: "address",
+    postalCode: "postalCode",
+    city: "city",
+    country: "country",
+    province: "provice",
+    apt: "apt"
+  };
+  let [orderDetail, setOrderDetail] = useState([]);
+  let orderData = {
+    orderDetail: orderDetail,
+    orderStatusHistory: null,
+    userInfo: userInfo,
+    date: "21-02-2025",
+    paymentMethod: "card",
+    status: "new",
+    shippingFee: ship,
+    tax: tax,
+    discount: 0,
+    total: amount
+  };
 
   const renderProduct = (item: Product, index: number) => {
     const { image, price, name } = item;
     subTotal += price;
     amount = subTotal + tax + ship;
 
+    orderDetail = [...orderDetail, `Item ${orderDetail.length + 1}`];
+    orderData.orderDetail = orderDetail;
+    orderData.tax = tax;
+    orderData.total = amount;
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("orderData", JSON.stringify(orderData));
+    }
     return (
       <div key={index} className="relative flex py-7 first:pt-0 last:pb-0">
         <div className="relative h-36 w-24 sm:w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
