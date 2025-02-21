@@ -30,10 +30,8 @@ export interface ProductQuickViewProps {
 
 const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "",data }) => {
   const { variants, numberOfReviews } = data;
-  console.log(data);
   const sizeList = Array.from(new Set(data.variants.map(item => item.size)));
   const colorList = Array.from(new Set(data.variants.map(item => item.color)));    
-  const priceList = data.variants.map(item => item.price);
 
   // Định nghĩa màu sắc tương ứng (Map màu từ text -> mã màu HEX)
   const colorMap: { [key: string]: string } = {
@@ -50,7 +48,6 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "",data }) =>
   const [variantActive, setVariantActive] = useState(0);
   const [selectedSize, setSelectedSize] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
-  console.log(selectedSize,colorList[selectedColor]);
 
   const selectedVariant = data.variants.find(
     (variant) => variant.size === sizeList[selectedSize] && colorList[selectedColor] === variant.color
@@ -282,10 +279,12 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "",data }) =>
               <span className="text-red-500 font-semibold">Hết hàng</span>          
             )}
           </div>
+          
           <ButtonPrimary
             className="flex-1 flex-shrink-0"
             onClick={notifyAddTocart}
-          >
+            disabled={selectedPrice === "0"} // ✅ Nếu `selectedPrice === "0"`, nút sẽ bị vô hiệu
+            >
             <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
             <span className="ml-3">Add to cart</span>
           </ButtonPrimary>

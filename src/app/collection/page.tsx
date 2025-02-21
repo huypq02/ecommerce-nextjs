@@ -68,6 +68,8 @@ const PageCollection = ({}) => {
 
 
   useEffect(() => {
+    console.log("ProductCard re-rendered!");
+
     fetchProducts(pageNumber,pageSize,true);
   }, [pageNumber,pageSize,true]); // Gọi lại API khi pageNumber thay đổi
 
@@ -111,6 +113,7 @@ const PageCollection = ({}) => {
         console.error("Lỗi khi gọi API:", error);
       }
     };
+
 
 
 
