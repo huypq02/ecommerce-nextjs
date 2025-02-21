@@ -22,7 +22,7 @@ const CheckoutPageStripe = ({ amount }: { amount: number }) => {
         })
         .then((res) => res.json())
         .then((data) => { 
-            setClientSecret(data.paymentIntent.clientSecret);
+            setClientSecret(data.paymentIntent.client_secret);
             setTransactionId(data.paymentIntent.id);
         });
     }, [amount]);
