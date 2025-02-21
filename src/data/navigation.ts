@@ -267,3 +267,6 @@ export const NAVIGATION_DEMO_2: NavItemType[] = [
     children: OTHER_PAGE_CHILD,
   },
 ];
+
+export const BACKEND_BASE_URL = "http://localhost:8080";
+export const PAYMENT_SUCCESS_URL = BACKEND_BASE_URL + "/order";

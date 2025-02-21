@@ -5,7 +5,7 @@ import CheckoutPage from "../page";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import convertToSubcurrency from "../../../../lib/convertToSubcurrency";
-import CheckoutPage2 from "../../../../components/CheckoutPage";
+import CheckoutPageStripe from "../../../../components/CheckoutPageStripe";
 
 if (process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY === undefined) {
     throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is not defined");
@@ -33,7 +33,7 @@ export default function Home() {
                 currency: "usd",
             }}
         >
-            <CheckoutPage2 amount={amount}/>
+            <CheckoutPageStripe amount={amount}/>
         </Elements>
     </main>
     return <main className=""></main>

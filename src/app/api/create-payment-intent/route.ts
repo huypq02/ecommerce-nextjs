@@ -13,7 +13,7 @@ export async function POST(request: Request) {
             automatic_payment_methods: { enabled: true },
         });
 
-        return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+        return NextResponse.json({ paymentIntent: paymentIntent });
     } catch (error) {
         console.error("Internal Error:", error);
 

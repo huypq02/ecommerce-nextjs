@@ -1,8 +1,77 @@
-export default function PaymentSuccess({
-    searchParams: { amount },
-}: {
-    searchParams: { aount: string };
-}) {
+"use client"
+
+import { PAYMENT_SUCCESS_URL } from "@/data/navigation";
+import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
+const PaymentSuccess = () => {
+    const searchParams = useSearchParams();
+    let amount = searchParams.get("amount");
+    let transactionId = searchParams.get("transactionId");
+
+    useEffect(() => {
+        let orderData = {
+            orderDetail: [
+                {
+                    quantity: 200,
+                    price: 200,
+                    color: "Black",
+                    size: "S"
+                } ,
+                {
+                    quantity: 200,
+                    price: 200,
+                    color: "White",
+                    size: "S"
+                }
+            ],
+            orderStatusHistory: [
+                {
+                    date: "21-02-2025",
+                    status: "paid"
+                },
+                {
+                    date: "21-02-2025",
+                    status: "draf"
+                }
+            ],
+            fullName: "fullName",
+            phone: "phone",
+            address: "address",
+            postalCode: "postalCode",
+            city: "city",
+            country: "country",
+            province: "provice",
+            apt: "apt",
+            transactionId: transactionId,
+            date: "21-02-2025",
+            paymentMethod: "card",
+            status: "paid",
+            shippingFee: 200,
+            tax: 200,
+            discount: 0,
+            total: 400
+        };
+
+        axios
+            .post(`${PAYMENT_SUCCESS_URL}`, {
+                orderData
+            })
+            .then((response) => {
+                if (response.data && response.data.data) {
+                var data = response.data;
+                var code = data.code;
+                if (code == 200) {
+                    window.location.href = "/collection";
+                }
+                }
+            })
+            .catch((error) => {
+                console.error("Lỗi khi gọi API:", error);
+            });
+    }, []);
+
     return (
         <main className="max-w-6xl mx-auto p-10 text-white text-center border m-10 rounded-md
         bg-gradient-to-tr from-blue-500 to-purple-500">
@@ -16,4 +85,6 @@ export default function PaymentSuccess({
             </div>
         </main>
     );
-};
+}
+
+export default PaymentSuccess;
