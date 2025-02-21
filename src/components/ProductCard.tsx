@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 //import LikeButton from "./LikeButton";
 import Prices from "./Prices";
 import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
@@ -29,17 +29,21 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
   const {id, name, description, variants,category,tags,link, variantType,allOfSizes,numberOfReviews,rating,status } = data;
   const [selectedProduct, setSelectedProduct] = useState<ProductExtend | null>(null);
   const handleQuickView = (product: ProductExtend) => {
-    setSelectedProduct(product);
+    setSelectedProduct(product); // ✅ Lưu sản phẩm được chọn vào state
+    localStorage.setItem("selectedProduct", JSON.stringify(product)); // 🔥 Cập nhật `localStorage` ngay lập tức
     setShowModalQuickView(true);
   };
-
+    // ✅ Khi người dùng nhấn "Xem Chi Tiết"
+    const handleDetailClick = useCallback((product: ProductExtend) => {
+      setSelectedProduct(product);
+      localStorage.setItem("selectedProduct", JSON.stringify(product));
+    }, []);
   const [variantActive, setVariantActive] = useState(0);
   const [showModalQuickView, setShowModalQuickView] = useState(false);
   const router = useRouter();
-  const selectedSize = data.variants?.[0]?.size || "Unknown";
+  const selectedSize = data.variants[0].size || "Unknown";
   const selectedImage = data.variants?.[0]?.images[0] || "Unknow";
   const sizeList = Array.from(new Set(data.variants.map((variant) => variant.size)));
-
 
   const notifyAddTocart = () => {
     toast.custom(
@@ -87,13 +91,14 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
           <div>
             <div className="flex justify-between ">
               <div>
-                <h3 className="text-base font-medium ">{name}</h3>
+                <h3 className="text-base font-medium ">{name}</h3>                
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   <span>
                     {variants ? variants[0].color : `Natural`}
                   </span>
                   <span className="mx-2 border-l border-slate-200 dark:border-slate-700 h-4"></span>
                   <span>{size || "XL"}</span>
+
                 </p>
               </div>
               <Prices price={data.variants[0].price} className="mt-0.5" />
@@ -111,7 +116,7 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
                   router.push("/cart");
                 }}
               >
-                View cart
+                View cart Hi
               </button>
             </div>
           </div>
@@ -227,18 +232,18 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
   };
 
   const renderSizeList = (sizes : string[] ) => {
-    if (!sizes || !sizes.length) {
+    if (!sizeList || !sizeList.length) {
       return null;
     }
 
     return (
       <div className="absolute bottom-0 inset-x-1 space-x-1.5 flex justify-center opacity-0 invisible group-hover:bottom-4 group-hover:opacity-100 group-hover:visible transition-all">
-        {sizes.map((size, index) => {
+        {sizeList.map((size, index) => {
           return (
             <div
               key={index}
               className="nc-shadow-lg w-10 h-10 rounded-xl bg-white hover:bg-slate-900 hover:text-white transition-colors cursor-pointer flex items-center justify-center uppercase font-semibold tracking-tight text-sm text-slate-900"
-              onClick={() => notifyAddTocart({})}
+              onClick={() => notifyAddTocart()}
             >
               {size}
             </div>
@@ -253,10 +258,29 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
       <div
         className={`nc-ProductCard relative flex flex-col bg-transparent ${className}`}
       >
-        <Link href={"/product-detail"} className="absolute inset-0"></Link>
+<Link 
+  href={`/product-detail?id=${data.id}`}
+  onClick={(e) => {
+    e.preventDefault();
+    handleDetailClick(data);
+    setTimeout(() => {
+      router.push(`/product-detail?id=${data.id}`);
+    }, 100); // Chờ localStorage cập nhật xong rồi mới chuyển trang
+  }}
+  className="absolute inset-0"
+>
+</Link>
+        
 
         <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-300 rounded-3xl overflow-hidden z-1 group">
-          <Link href={"/product-detail"} className="block">
+          <Link href={"/product-detail"} className="block"             onClick={(e) => {
+    e.preventDefault();
+    handleDetailClick(data);
+    setTimeout(() => {
+      router.push(`/product-detail?id=${data.id}`);
+    }, 100); // Chờ localStorage cập nhật xong rồi mới chuyển trang
+  }}
+          >
             <NcImage
               containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0"
               src={selectedImage}
@@ -294,14 +318,14 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
         </div>
       </div>
 
-      {/* QUICKVIEW */}
-      {selectedProduct && (
-  <ModalQuickView
-    data={selectedProduct} // Đảm bảo Modal nhận đúng sản phẩm
-    show={showModalQuickView}
-    onCloseModalQuickView={() => setShowModalQuickView(false)}
-  />
-)}
+      {/*QUICKVIEW*/}
+      {showModalQuickView && selectedProduct && (
+        <ModalQuickView
+          data={selectedProduct} // 🔥 Hiển thị sản phẩm đã lưu trong `localStorage`
+          show={showModalQuickView}
+          onCloseModalQuickView={() => setShowModalQuickView(false)}
+        />
+      )}
       
     </>
   );
