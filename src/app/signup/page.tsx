@@ -1,3 +1,4 @@
+"use client";
 import React, { FC } from "react";
 import facebookSvg from "@/images/Facebook.svg";
 import twitterSvg from "@/images/Twitter.svg";
@@ -6,24 +7,65 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
+import axios from 'axios';
+import { BACKEND_BASE_URL, OAUTH2_URL_FACEBOOK } from "@/data/navigation";
+
+interface SocialLoginResponse {
+  code: number;
+  message: string | null;
+  data: string;
+}
 
 const loginSocials = [
   {
     name: "Continue with Facebook",
-    href: "#",
+    href: "",
     icon: facebookSvg,
+    type: "facebook",
   },
   {
     name: "Continue with Twitter",
     href: "#",
     icon: twitterSvg,
+    type: "twitter",
   },
   {
     name: "Continue with Google",
     href: "#",
     icon: googleSvg,
+    type: "google",
   },
 ];
+
+const callSocialSignup = async (type: string): Promise<void> => {
+  try {
+    // Store loginType in localStorage before redirect
+    localStorage.setItem('socialLoginType', type);
+
+    // const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || BACKEND_BASE_URL;
+    const SOCIAL_AUTH_ENDPOINT = `${OAUTH2_URL_FACEBOOK}?loginType=`;
+    const response = await axios.get<SocialLoginResponse>(
+      `${SOCIAL_AUTH_ENDPOINT}${type}`,
+      {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const result = response.data;
+    
+    if (result.code === 200 && result.data) {
+      // Append loginType parameter to Facebook URL
+      const fbUrl = new URL(result.data);
+      
+      // Redirect to modified Facebook OAuth URL
+      window.location.href = fbUrl.toString();
+    }
+  } catch (error) {
+    console.error('Failed to initiate social login:', error);
+  }
+}
 
 const PageSignUp = () => {
   return (
@@ -38,6 +80,10 @@ const PageSignUp = () => {
               <a
                 key={index}
                 href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  callSocialSignup(item.type);
+                }}
                 className=" flex w-full rounded-lg bg-primary-50 dark:bg-neutral-800 px-4 py-3 transform transition-transform sm:px-6 hover:translate-y-[-2px]"
               >
                 <Image

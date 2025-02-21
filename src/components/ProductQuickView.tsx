@@ -21,28 +21,52 @@ import NotifyAddTocart from "./NotifyAddTocart";
 import AccordionInfo from "@/components/AccordionInfo";
 import Image from "next/image";
 import Link from "next/link";
+import { ProductExtend } from "@/app/collection/page";
 
 export interface ProductQuickViewProps {
   className?: string;
+  data: ProductExtend;
 }
 
-const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
-  const { sizes, variants, status, allOfSizes } = PRODUCTS[0];
-  const LIST_IMAGES_DEMO = [detail1JPG, detail2JPG, detail3JPG];
+const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "",data }) => {
+  const { variants, numberOfReviews } = data;
+  const sizeList = Array.from(new Set(data.variants.map(item => item.size)));
+  const colorList = Array.from(new Set(data.variants.map(item => item.color)));    
+
+  // Định nghĩa màu sắc tương ứng (Map màu từ text -> mã màu HEX)
+  const colorMap: { [key: string]: string } = {
+    Xanh: "#008000",  // Màu xanh lá
+    Đỏ: "#FF0000",    // Màu đỏ
+    Vàng: "#FFD700",  // Màu vàng
+    Hồng: "#FFC0CB",
+    Tím: "#6A0DAD",
+    Đen: "#000000",
+    Trắng: "#FFFFFF"
+
+  };
 
   const [variantActive, setVariantActive] = useState(0);
-  const [sizeSelected, setSizeSelected] = useState(sizes ? sizes[0] : "");
+  const [selectedSize, setSelectedSize] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(0);
+
+  const selectedVariant = data.variants.find(
+    (variant) => variant.size === sizeList[selectedSize] && colorList[selectedColor] === variant.color
+  );
+  
+  // Lấy giá (nếu không tìm thấy thì mặc định là 0)
+  const selectedPrice = selectedVariant ? selectedVariant.price : "0";
+
   const [qualitySelected, setQualitySelected] = useState(1);
 
   const notifyAddTocart = () => {
     toast.custom(
       (t) => (
         <NotifyAddTocart
-          productImage={LIST_IMAGES_DEMO[0]}
+          productImage={variants[0].images[0]}
           qualitySelected={qualitySelected}
           show={t.visible}
-          sizeSelected={sizeSelected}
-          variantActive={variantActive}
+          sizeSelected={sizeList[selectedSize]}
+          colorSelected={colorList[selectedColor]}
         />
       ),
       { position: "top-right", id: "nc-product-notify", duration: 3000 }
@@ -60,31 +84,42 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
           <span className="text-sm font-medium">
             Color:
             <span className="ml-1 font-semibold">
-              {variants[variantActive].name}
+              {colorList[selectedColor]}
             </span>
           </span>
         </label>
         <div className="flex mt-2.5">
-          {variants.map((variant, index) => (
+          {colorList.map((color, index) => (
             <div
               key={index}
-              onClick={() => setVariantActive(index)}
-              className={`relative flex-1 max-w-[75px] h-10 rounded-full border-2 cursor-pointer ${
-                variantActive === index
+              onClick={() => setSelectedColor(index)}
+              className={`relative flex-1 max-w-[75px] h-10 rounded-full border-2 cursor-pointer 
+                ${selectedColor === index
                   ? "border-primary-6000 dark:border-primary-500"
                   : "border-transparent"
               }`}
             >
               <div className="absolute inset-0.5 rounded-full overflow-hidden z-0">
                 <Image
-                  src={variant.thumbnail || ""}
+                  src={""}
                   alt=""
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="absolute w-full h-full object-cover"
                 />
+                
               </div>
+              <div
+            className="w-6 h-6 rounded-full border border-gray-300 cursor-pointer" 
+            style={{
+              backgroundColor: colorMap[color] || "#ccc", // Mặc định nếu không tìm thấy màu
+            }}
+            title={colorMap[index]} // Hiển thị tên màu khi hover
+          ></div>
+            
             </div>
+            
+          
           ))}
         </div>
       </div>
@@ -92,7 +127,7 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
   };
 
   const renderSizeList = () => {
-    if (!allOfSizes || !sizes || !sizes.length) {
+    if (!sizeList || !sizeList || !sizeList.length) {
       return null;
     }
     return (
@@ -101,7 +136,7 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
           <label htmlFor="">
             <span className="">
               Size:
-              <span className="ml-1 font-semibold">{sizeSelected}</span>
+              <span className="ml-1 font-semibold">{sizeList[selectedSize]}</span>
             </span>
           </label>
           <a
@@ -110,13 +145,12 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
             href="##"
             className="text-primary-6000 hover:text-primary-500"
           >
-            See sizing chart
           </a>
         </div>
         <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 mt-2.5">
-          {allOfSizes.map((size, index) => {
-            const isActive = size === sizeSelected;
-            const sizeOutStock = !sizes.includes(size);
+          {sizeList.map((size, index) => {
+            const isActive = size === sizeList[selectedSize];
+            const sizeOutStock = !sizeList.includes(size);
             return (
               <div
                 key={index}
@@ -134,7 +168,7 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
                   if (sizeOutStock) {
                     return;
                   }
-                  setSizeSelected(size);
+                  setSelectedSize(index);
                 }}
               >
                 {size}
@@ -193,14 +227,14 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
         {/* ---------- 1 HEADING ----------  */}
         <div>
           <h2 className="text-2xl font-semibold hover:text-primary-6000 transition-colors">
-            <Link href="/product-detail">Heavy Weight Shoes</Link>
+            <Link href="/product-detail">{data.name}</Link>
           </h2>
 
           <div className="flex items-center mt-5 space-x-4 sm:space-x-5">
             {/* <div className="flex text-xl font-semibold">$112.00</div> */}
             <Prices
               contentClass="py-1 px-2 md:py-1.5 md:px-3 text-lg font-semibold"
-              price={112}
+              price={selectedPrice}
             />
 
             <div className="h-6 border-l border-slate-300 dark:border-slate-700"></div>
@@ -212,10 +246,10 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
               >
                 <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
                 <div className="ml-1.5 flex">
-                  <span>4.9</span>
+                  <span>{data.rating}</span>
                   <span className="block mx-2">·</span>
                   <span className="text-slate-600 dark:text-slate-400 underline">
-                    142 reviews
+                    {data.category || 99} reviews
                   </span>
                 </div>
               </Link>
@@ -235,15 +269,22 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
         {/*  ---------- 4  QTY AND ADD TO CART BUTTON */}
         <div className="flex space-x-3.5">
           <div className="flex items-center justify-center bg-slate-100/70 dark:bg-slate-800/70 px-2 py-3 sm:p-3.5 rounded-full">
+            
+            { selectedPrice !== "0" ? (
             <NcInputNumber
               defaultValue={qualitySelected}
               onChange={setQualitySelected}
             />
+            ) : (
+              <span className="text-red-500 font-semibold">Hết hàng</span>          
+            )}
           </div>
+          
           <ButtonPrimary
             className="flex-1 flex-shrink-0"
             onClick={notifyAddTocart}
-          >
+            disabled={selectedPrice === "0"} // ✅ Nếu `selectedPrice === "0"`, nút sẽ bị vô hiệu
+            >
             <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
             <span className="ml-3">Add to cart</span>
           </ButtonPrimary>
@@ -258,8 +299,8 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
           data={[
             {
               name: "Description",
-              content:
-                "Fashion is a form of self-expression and autonomy at a particular period and place and in a specific context, of clothing, footwear, lifestyle, accessories, makeup, hairstyle, and body posture.",
+              content: data.description
+                // "Fashion is a form of self-expression and autonomy at a particular period and place and in a specific context, of clothing, footwear, lifestyle, accessories, makeup, hairstyle, and body posture.",
             },
             {
               name: "Features",
@@ -292,7 +333,7 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
           <div className="relative">
             <div className="aspect-w-16 aspect-h-16">
               <Image
-                src={LIST_IMAGES_DEMO[0]}
+                src={variants[0].images[0]}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="w-full rounded-xl object-cover"
@@ -306,12 +347,13 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "" }) => {
             <LikeButton className="absolute right-3 top-3 " />
           </div>
           <div className="hidden lg:grid grid-cols-2 gap-3 mt-3 sm:gap-6 sm:mt-6 xl:gap-5 xl:mt-5">
-            {[LIST_IMAGES_DEMO[1], LIST_IMAGES_DEMO[2]].map((item, index) => {
+            {variants.map((item, index) => {
               return (
                 <div key={index} className="aspect-w-3 aspect-h-4">
                   <Image
                     fill
-                    src={item}
+                    
+                    src={item.images[0]}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="w-full rounded-xl object-cover"
                     alt="product detail 1"

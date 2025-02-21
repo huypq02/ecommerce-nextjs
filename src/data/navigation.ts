@@ -93,6 +93,7 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/account", name: "Accout Page" },
       { id: ncNanoId(), href: "/account-order", name: "Order Page" },
       { id: ncNanoId(), href: "/subscription", name: "Subscription" },
+      { id: ncNanoId(), href: "/user/auth/social/callback", name: "OAuth Callback" },
     ],
   },
   {
@@ -208,6 +209,11 @@ const OTHER_PAGE_CHILD: NavItemType[] = [
         href: "/subscription",
         name: "Subscription",
       },
+      {
+        id: ncNanoId(),
+        href: "/user/auth/social/callback",
+        name: "OAuth2 Callback",
+      },
     ],
   },
   {
@@ -269,4 +275,8 @@ export const NAVIGATION_DEMO_2: NavItemType[] = [
 ];
 
 export const BACKEND_BASE_URL = "http://localhost:8080";
+export const OAUTH2_URL_GOOGLE = BACKEND_BASE_URL + "/user/auth/social";
+export const OAUTH2_URL_GOOGLE_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
+export const OAUTH2_URL_FACEBOOK = BACKEND_BASE_URL + "/user/auth/social";
+export const OAUTH2_URL_FACEBOOK_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
 export const PAYMENT_SUCCESS_URL = BACKEND_BASE_URL + "/order";

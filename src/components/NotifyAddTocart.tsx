@@ -7,17 +7,17 @@ import Image, { StaticImageData } from "next/image";
 interface Props {
   show: boolean;
   productImage: string | StaticImageData;
-  variantActive: number;
   sizeSelected: string;
   qualitySelected: number;
+  colorSelected:string
 }
 
 const NotifyAddTocart: FC<Props> = ({
   show,
   productImage,
-  variantActive,
   qualitySelected,
   sizeSelected,
+  colorSelected
 }) => {
   const { name, price, variants } = PRODUCTS[0];
 
@@ -41,7 +41,7 @@ const NotifyAddTocart: FC<Props> = ({
                 <h3 className="text-base font-medium ">{name}</h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   <span>
-                    {variants ? variants[variantActive].name : `Natural`}
+                    {colorSelected ? colorSelected  : `Natural`}
                   </span>
                   <span className="mx-2 border-l border-slate-200 dark:border-slate-700 h-4"></span>
                   <span>{sizeSelected || "XL"}</span>
