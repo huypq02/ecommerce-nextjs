@@ -25,8 +25,15 @@ const CheckoutPage = () => {
     }, 80);
   };
 
+  let subTotal = 0;
+  let amount = 0;
+  const tax = 24.9;
+  const ship = 5;
+
   const renderProduct = (item: Product, index: number) => {
     const { image, price, name } = item;
+    subTotal += price;
+    amount = subTotal + tax + ship;
 
     return (
       <div key={index} className="relative flex py-7 first:pt-0 last:pb-0">
@@ -265,27 +272,27 @@ const CheckoutPage = () => {
               <div className="mt-4 flex justify-between py-2.5">
                 <span>Subtotal</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $249.00
+                  ${`${subTotal}`}
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Shipping estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $5.00
+                  ${`${ship}`}
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Tax estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $24.90
+                  ${`${tax}`}
                 </span>
               </div>
               <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                 <span>Order total</span>
-                <span>$276.00</span>
+                <span>${`${amount}`}</span>
               </div>
             </div>
-            <ButtonPrimary href="/checkout/demo" className="mt-8 w-full">Confirm order</ButtonPrimary>
+            <ButtonPrimary href={`/checkout/stripe?amount=${amount}`} className="mt-8 w-full">Confirm order</ButtonPrimary>
             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
               <p className="block relative pl-5">
                 <svg
