@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import router from "next/router";
 import axios from 'axios'
+import { useRouter } from 'next/navigation';
 
 
 export interface ContactFormData {
@@ -50,6 +51,8 @@ export interface CheckoutData {
 }
 
 const CheckoutPage = () => {
+  const router = useRouter(); // Initialize the router hook
+
   const [tabActive, setTabActive] = useState<
     "ContactInfo" | "ShippingAddress" | "PaymentMethod"
   >("ShippingAddress");
@@ -145,11 +148,12 @@ const CheckoutPage = () => {
        if (checkoutData.payment.paymentType === 'card') {
          router.push(`/checkout/stripe?amount=${orderData.total}`);
        } else {
-         router.push('/order');
-       }
+        router.push('/payment/success');
+      }
      } catch (error) {
        console.error('Checkout error:', error);
        // Handle error (show toast, error message, etc.)
+       router.push('/payment/error');
      }
   };
 
@@ -358,7 +362,7 @@ const CheckoutPage = () => {
           <ContactInfo
             isActive={tabActive === "ContactInfo"}
             onSubmit={handleContactInfoSubmit}
-            initialData={checkoutData.shipping}
+            initialData={checkoutData.contact}
             onOpenActive={() => {
               setTabActive("ContactInfo");
               handleScrollToEl("ContactInfo");
