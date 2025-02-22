@@ -94,6 +94,8 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/account-order", name: "Order Page" },
       { id: ncNanoId(), href: "/subscription", name: "Subscription" },
       { id: ncNanoId(), href: "/user/auth/social/callback", name: "OAuth Callback" },
+      { id: ncNanoId(), href: "/payment/success", name: "Payment Success" },
+      { id: ncNanoId(), href: "/payment/error", name: "Payment Error" },
     ],
   },
   {
