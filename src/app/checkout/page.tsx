@@ -25,9 +25,50 @@ const CheckoutPage = () => {
     }, 80);
   };
 
+  //Amount money
+  let subTotal = 0;
+  let amount = 0;
+  const tax = 24.9;
+  const ship = 5;
+
+  //Order informations
+  let userInfo = {
+    fullName: "fullName",
+    phone: "phone",
+    address: "address",
+    postalCode: "postalCode",
+    city: "city",
+    country: "country",
+    province: "provice",
+    apt: "apt"
+  };
+  let [orderDetail, setOrderDetail] = useState([]);
+  let orderData = {
+    orderDetail: orderDetail,
+    orderStatusHistory: null,
+    userInfo: userInfo,
+    date: "21-02-2025",
+    paymentMethod: "card",
+    status: "new",
+    shippingFee: ship,
+    tax: tax,
+    discount: 0,
+    total: amount
+  };
+
   const renderProduct = (item: Product, index: number) => {
     const { image, price, name } = item;
+    subTotal += price;
+    amount = subTotal + tax + ship;
 
+    orderDetail = [...orderDetail, `Item ${orderDetail.length + 1}`];
+    orderData.orderDetail = orderDetail;
+    orderData.tax = tax;
+    orderData.total = amount;
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("orderData", JSON.stringify(orderData));
+    }
     return (
       <div key={index} className="relative flex py-7 first:pt-0 last:pb-0">
         <div className="relative h-36 w-24 sm:w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
@@ -265,27 +306,27 @@ const CheckoutPage = () => {
               <div className="mt-4 flex justify-between py-2.5">
                 <span>Subtotal</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $249.00
+                  ${`${subTotal}`}
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Shipping estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $5.00
+                  ${`${ship}`}
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Tax estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $24.90
+                  ${`${tax}`}
                 </span>
               </div>
               <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                 <span>Order total</span>
-                <span>$276.00</span>
+                <span>${`${amount}`}</span>
               </div>
             </div>
-            <ButtonPrimary className="mt-8 w-full">Confirm order</ButtonPrimary>
+            <ButtonPrimary href={`/checkout/stripe?amount=${amount}`} className="mt-8 w-full">Confirm order</ButtonPrimary>
             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
               <p className="block relative pl-5">
                 <svg
