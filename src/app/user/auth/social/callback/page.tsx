@@ -51,7 +51,10 @@ const CallbackPage = () => {
           localStorage.setItem('token', data.data);
           // Clean up the loginType after successful auth
           localStorage.removeItem('socialLoginType');
-          router.push('/');
+          // Save token to axios header
+          axios.defaults.headers.common['Authorization'] = `Bearer ${data.data}`;
+          
+          router.push('/collection');
         } else {
           throw new Error(data.message || 'Authentication failed');
         }
