@@ -1,24 +1,42 @@
 "use client";
 
 import Label from "@/components/Label/Label";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Input from "@/shared/Input/Input";
 import Radio from "@/shared/Radio/Radio";
 import Select from "@/shared/Select/Select";
+import { ShippingAddressData } from "./page";
 
 interface Props {
   isActive: boolean;
   onCloseActive: () => void;
   onOpenActive: () => void;
+  onSubmit: (shippingData: ShippingAddressData) => void;
+  initialData: ShippingAddressData;
 }
 
 const ShippingAddress: FC<Props> = ({
   isActive,
   onCloseActive,
   onOpenActive,
+  onSubmit,
+  initialData,
 }) => {
+  const [formData, setFormData] = useState<ShippingAddressData>(initialData);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    onCloseActive();
+  };
+
   const renderShippingAddress = () => {
     return (
       <div className="border border-slate-200 dark:border-slate-700 rounded-xl ">
@@ -103,105 +121,137 @@ const ShippingAddress: FC<Props> = ({
             isActive ? "block" : "hidden"
           }`}
         >
-          {/* ============ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
-            <div>
-              <Label className="text-sm">First name</Label>
-              <Input className="mt-1.5" defaultValue="Cole" />
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
+              <div>
+                <Label className="text-sm">First name</Label>
+                <Input
+                  className="mt-1.5"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Last name</Label>
+                <Input
+                  className="mt-1.5"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-sm">Last name</Label>
-              <Input className="mt-1.5" defaultValue="Enrico " />
-            </div>
-          </div>
 
-          {/* ============ */}
-          <div className="sm:flex space-y-4 sm:space-y-0 sm:space-x-3">
-            <div className="flex-1">
-              <Label className="text-sm">Address</Label>
-              <Input
-                className="mt-1.5"
-                placeholder=""
-                defaultValue={"123, Dream Avenue, USA"}
-                type={"text"}
-              />
+            <div className="sm:flex space-y-4 sm:space-y-0 sm:space-x-3">
+              <div className="flex-1">
+                <Label className="text-sm">Address</Label>
+                <Input
+                  className="mt-1.5"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="sm:w-1/3">
+                <Label className="text-sm">Apt, Suite *</Label>
+                <Input
+                  className="mt-1.5"
+                  name="aptSuite"
+                  value={formData.aptSuite}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div className="sm:w-1/3">
-              <Label className="text-sm">Apt, Suite *</Label>
-              <Input className="mt-1.5" defaultValue="55U - DD5 " />
-            </div>
-          </div>
 
-          {/* ============ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
-            <div>
-              <Label className="text-sm">City</Label>
-              <Input className="mt-1.5" defaultValue="Norris" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
+              <div>
+                <Label className="text-sm">City</Label>
+                <Input
+                  className="mt-1.5"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Country</Label>
+                <Select
+                  className="mt-1.5"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                >
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="Mexico">Mexico</option>
+                  <option value="Israel">Israel</option>
+                  <option value="France">France</option>
+                  <option value="England">England</option>
+                  <option value="Laos">Laos</option>
+                  <option value="China">China</option>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label className="text-sm">Country</Label>
-              <Select className="mt-1.5" defaultValue="United States ">
-                <option value="United States">United States</option>
-                <option value="United States">Canada</option>
-                <option value="United States">Mexico</option>
-                <option value="United States">Israel</option>
-                <option value="United States">France</option>
-                <option value="United States">England</option>
-                <option value="United States">Laos</option>
-                <option value="United States">China</option>
-              </Select>
-            </div>
-          </div>
 
-          {/* ============ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
-            <div>
-              <Label className="text-sm">State/Province</Label>
-              <Input className="mt-1.5" defaultValue="Texas" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
+              <div>
+                <Label className="text-sm">State/Province</Label>
+                <Input
+                  className="mt-1.5"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Postal code</Label>
+                <Input
+                  className="mt-1.5"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-sm">Postal code</Label>
-              <Input className="mt-1.5" defaultValue="2500 " />
-            </div>
-          </div>
 
-          {/* ============ */}
-          <div>
-            <Label className="text-sm">Address type</Label>
-            <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-              <Radio
-                label={`<span class="text-sm font-medium">Home <span class="font-light">(All Day Delivery)</span></span>`}
-                id="Address-type-home"
+            <div>
+              <Label className="text-sm">Address type</Label>
+              <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                <Radio
+                  label={`<span class="text-sm font-medium">Home <span class="font-light">(All Day Delivery)</span></span>`}
+                  id="Address-type-home"
                 name="Address-type"
                 defaultChecked
-              />
-              <Radio
-                label={`<span class="text-sm font-medium">Office <span class="font-light">(Delivery <span class="font-medium">9 AM - 5 PM</span>)</span> </span>`}
-                id="Address-type-office"
+                />
+                <Radio
+                  label={`<span class="text-sm font-medium">Office <span class="font-light">(Delivery <span class="font-medium">9 AM - 5 PM</span>)</span> </span>`}
+                  id="Address-type-office"
                 name="Address-type"
-              />
+                />
+              </div>
             </div>
-          </div>
 
-          {/* ============ */}
-          <div className="flex flex-col sm:flex-row pt-6">
-            <ButtonPrimary
-              className="sm:!px-7 shadow-none"
-              onClick={onCloseActive}
-            >
-              Save and next to Payment
-            </ButtonPrimary>
-            <ButtonSecondary
-              className="mt-3 sm:mt-0 sm:ml-3"
-              onClick={onCloseActive}
-            >
-              Cancel
-            </ButtonSecondary>
-          </div>
+            <div className="flex flex-col sm:flex-row pt-6">
+              <ButtonPrimary
+                className="sm:!px-7 shadow-none"
+                type="submit"
+              >
+                Save and next to Payment
+              </ButtonPrimary>
+              <ButtonSecondary
+                className="mt-3 sm:mt-0 sm:ml-3"
+                onClick={onCloseActive}
+              >
+                Cancel
+              </ButtonSecondary>
+            </div>
+          </form>
         </div>
       </div>
     );
   };
+
   return renderShippingAddress();
 };
 

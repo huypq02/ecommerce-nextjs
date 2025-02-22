@@ -12,11 +12,146 @@ import PaymentMethod from "./PaymentMethod";
 import ShippingAddress from "./ShippingAddress";
 import Image from "next/image";
 import Link from "next/link";
+import router from "next/router";
+import axios from 'axios'
+
+
+export interface ContactFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
+export interface ShippingAddressData {
+  addressType: string;
+  lastName: string | number | readonly string[] | undefined;
+  firstName: string | number | readonly string[] | undefined;
+  aptSuite: string | number | readonly string[] | undefined;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PaymentMethodData {
+  cardNumber: string;
+  cardHolder: string;
+  expiryDate: string;
+  cvv: string;
+  paymentType: string;
+}
+
+export interface CheckoutData {
+  contact: ContactFormData;
+  shipping: ShippingAddressData;
+  payment: PaymentMethodData;
+}
 
 const CheckoutPage = () => {
   const [tabActive, setTabActive] = useState<
     "ContactInfo" | "ShippingAddress" | "PaymentMethod"
   >("ShippingAddress");
+  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
+    contact: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      phone: ''
+    },
+    shipping: {
+      addressType: '',
+      lastName: '',
+      firstName: '',
+      aptSuite: '',
+      address: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: ''
+    },
+    payment: {
+      cardNumber: '',
+      cardHolder: '',
+      expiryDate: '',
+      cvv: '',
+      paymentType: ''
+    }
+  });
+
+  const handleContactInfoSubmit = (contactData: ContactFormData) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      contact: contactData
+    }));
+    setTabActive('ShippingAddress');
+  };
+
+  const handleShippingSubmit = (shippingData: ShippingAddressData) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      shipping: shippingData
+    }));
+    setTabActive('PaymentMethod');
+  };
+
+  const handlePaymentSubmit = (paymentData: PaymentMethodData) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      payment: paymentData
+    }));
+    // Handle final checkout
+    handleCheckoutSubmit();
+  };
+
+  const handleCheckoutSubmit = async () => {
+    try {
+      const orderData = {
+        date: new Date().toISOString(),
+        paymentMethod: checkoutData.payment.paymentType === 'card' ? 'Card' : 'Home',
+        status: 'Completed',
+        fullName: `${checkoutData.contact.firstName} ${checkoutData.contact.lastName}`,
+        address: checkoutData.shipping.address,
+        apt: checkoutData.shipping.aptSuite,
+        city: checkoutData.shipping.city,
+        country: checkoutData.shipping.country,
+        province: checkoutData.shipping.state,
+        postalCode: checkoutData.shipping.postalCode,
+        shippingFee: ship,
+        tax: tax,
+        total: amount,
+        orderDetail: PRODUCTS.map(product => ({
+          quantity: 1, // Assuming quantity is 1 for simplicity
+          presentUnitPrice: product.price,
+          color: 'Black', // Assuming color is Black for simplicity
+          size: 'XS' // Assuming size is XS for simplicity
+        })),
+        orderStatusHistory: []
+      };
+       // Send orderData to your API
+       const response = await axios.post('http://localhost:8080/order', orderData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+       });
+
+       if (response.status !== 200) {
+         throw new Error('Order failed');
+       }
+ 
+       // Handle successful checkout
+       if (checkoutData.payment.paymentType === 'card') {
+         router.push(`/checkout/stripe?amount=${orderData.total}`);
+       } else {
+         router.push('/order');
+       }
+     } catch (error) {
+       console.error('Checkout error:', error);
+       // Handle error (show toast, error message, etc.)
+     }
+  };
 
   const handleScrollToEl = (id: string) => {
     const element = document.getElementById(id);
@@ -222,6 +357,8 @@ const CheckoutPage = () => {
         <div id="ContactInfo" className="scroll-mt-24">
           <ContactInfo
             isActive={tabActive === "ContactInfo"}
+            onSubmit={handleContactInfoSubmit}
+            initialData={checkoutData.shipping}
             onOpenActive={() => {
               setTabActive("ContactInfo");
               handleScrollToEl("ContactInfo");
@@ -236,6 +373,8 @@ const CheckoutPage = () => {
         <div id="ShippingAddress" className="scroll-mt-24">
           <ShippingAddress
             isActive={tabActive === "ShippingAddress"}
+            onSubmit={handleShippingSubmit}
+            initialData={checkoutData.shipping}
             onOpenActive={() => {
               setTabActive("ShippingAddress");
               handleScrollToEl("ShippingAddress");
@@ -250,6 +389,8 @@ const CheckoutPage = () => {
         <div id="PaymentMethod" className="scroll-mt-24">
           <PaymentMethod
             isActive={tabActive === "PaymentMethod"}
+            onSubmit={handlePaymentSubmit}
+            initialData={checkoutData.payment}
             onOpenActive={() => {
               setTabActive("PaymentMethod");
               handleScrollToEl("PaymentMethod");
@@ -326,7 +467,15 @@ const CheckoutPage = () => {
                 <span>${`${amount}`}</span>
               </div>
             </div>
-            <ButtonPrimary href={`/checkout/stripe?amount=${amount}`} className="mt-8 w-full">Confirm order</ButtonPrimary>
+            {checkoutData.payment.paymentType === 'card' ? (
+              <ButtonPrimary href={`/checkout/stripe?amount=${amount}`} className="mt-8 w-full">
+              Confirm order
+              </ButtonPrimary>
+            ) : (
+              <ButtonPrimary onClick={handleCheckoutSubmit} className="mt-8 w-full">
+              Confirm order
+              </ButtonPrimary>
+            )}
             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
               <p className="block relative pl-5">
                 <svg
