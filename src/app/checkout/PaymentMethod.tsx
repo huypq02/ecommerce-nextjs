@@ -37,6 +37,7 @@ const PaymentMethod: FC<Props> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    formData.paymentType = methodActive;
     onSubmit(formData);
     onCloseActive();
   };
@@ -330,6 +331,7 @@ const PaymentMethod: FC<Props> = ({
             isActive ? "block" : "hidden"
           }`}
         >
+        <form onSubmit={handleSubmit}>
           {/* ==================== */}
           <div>{renderDebitCredit()}</div>
           <div>{renderPaymentAtHome()}</div>
@@ -337,14 +339,15 @@ const PaymentMethod: FC<Props> = ({
           <div className="flex pt-6">
             <ButtonPrimary
               className="w-full max-w-[240px]"
-              onClick={onCloseActive}
+              type="submit"
             >
-              Confirm order
+              Save and next to Confirm Order
             </ButtonPrimary>
             <ButtonSecondary className="ml-3" onClick={onCloseActive}>
               Cancel
             </ButtonSecondary>
           </div>
+          </form>
         </div>
       </div>
     );

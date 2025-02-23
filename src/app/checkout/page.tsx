@@ -54,7 +54,7 @@ const CheckoutPage = () => {
   const router = useRouter(); // Initialize the router hook
 
   const [tabActive, setTabActive] = useState<
-    "ContactInfo" | "ShippingAddress" | "PaymentMethod"
+    "ContactInfo" | "ShippingAddress" | "PaymentMethod" | ""
   >("ShippingAddress");
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     contact: {
@@ -104,15 +104,14 @@ const CheckoutPage = () => {
       ...prev,
       payment: paymentData
     }));
-    // Handle final checkout
-    handleCheckoutSubmit();
+    setTabActive("");
   };
 
   const handleCheckoutSubmit = async () => {
     try {
       const orderData = {
         date: new Date().toISOString(),
-        paymentMethod: checkoutData.payment.paymentType === 'card' ? 'Card' : 'Home',
+        paymentMethod: checkoutData.payment.paymentType === 'Credit-Card' ? 'Card' : 'Home',
         status: 'Completed',
         fullName: `${checkoutData.contact.firstName} ${checkoutData.contact.lastName}`,
         address: checkoutData.shipping.address,
@@ -121,6 +120,7 @@ const CheckoutPage = () => {
         country: checkoutData.shipping.country,
         province: checkoutData.shipping.state,
         postalCode: checkoutData.shipping.postalCode,
+        phone: checkoutData.contact.phone,
         shippingFee: ship,
         tax: tax,
         total: amount,
@@ -132,6 +132,12 @@ const CheckoutPage = () => {
         })),
         orderStatusHistory: []
       };
+
+      if (orderData.paymentMethod === 'Card') {
+        localStorage.setItem('orderData', JSON.stringify(orderData));
+        window.location.href = `/checkout/stripe?amount=${orderData.total}`;
+      }
+
        // Send orderData to your API
        const response = await axios.post('http://localhost:8080/order', orderData, {
           headers: {
@@ -144,12 +150,8 @@ const CheckoutPage = () => {
          throw new Error('Order failed');
        }
  
-       // Handle successful checkout
-       if (checkoutData.payment.paymentType === 'card') {
-         router.push(`/checkout/stripe?amount=${orderData.total}`);
-       } else {
-        router.push('/payment/success');
-      }
+      // Handle successful checkout       
+      router.push('/payment/success');    
      } catch (error) {
        console.error('Checkout error:', error);
        // Handle error (show toast, error message, etc.)
