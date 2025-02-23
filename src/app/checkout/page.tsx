@@ -84,7 +84,6 @@ const CheckoutPage = () => {
   });
 
   const handleContactInfoSubmit = (contactData: ContactFormData) => {
-    debugger;
     setCheckoutData(prev => ({
       ...prev,
       contact: contactData
@@ -106,9 +105,6 @@ const CheckoutPage = () => {
       payment: paymentData
     }));
     setTabActive("");
-
-    // // Handle final checkout
-    // handleCheckoutSubmit();
   };
 
   const handleCheckoutSubmit = async () => {
@@ -155,8 +151,7 @@ const CheckoutPage = () => {
        }
  
       // Handle successful checkout       
-      router.push('/payment/success');
-      
+      router.push('/payment/success');    
      } catch (error) {
        console.error('Checkout error:', error);
        // Handle error (show toast, error message, etc.)

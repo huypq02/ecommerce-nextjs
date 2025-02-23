@@ -1,17 +1,33 @@
 import Label from "@/components/Label/Label";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Input from "@/shared/Input/Input";
+import { ContactFormData } from "./page";
 
 interface Props {
   isActive: boolean;
   onOpenActive: () => void;
   onCloseActive: () => void;
+  onSubmit: (contactData: ContactFormData) => void;
+  initialData: ContactFormData;
 }
 
-const ContactInfo: FC<Props> = ({ isActive, onCloseActive, onOpenActive }) => {
+const ContactInfo: FC<Props> = ({ isActive, onCloseActive, onOpenActive, onSubmit, initialData }) => {
+  const [formData, setFormData] = useState<ContactFormData>(initialData);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    onCloseActive();
+  };
+
   const renderAccount = () => {
     return (
       <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden z-0">
@@ -80,47 +96,61 @@ const ContactInfo: FC<Props> = ({ isActive, onCloseActive, onOpenActive }) => {
             isActive ? "block" : "hidden"
           }`}
         >
-          <div className="flex justify-between flex-wrap items-baseline">
-            <h3 className="text-lg font-semibold">Contact infomation</h3>
-            <span className="block text-sm my-1 md:my-0">
-              Do not have an account?{` `}
-              <a href="##" className="text-primary-500 font-medium">
-                Log in
-              </a>
-            </span>
-          </div>
-          <div className="max-w-lg">
-            <Label className="text-sm">Your phone number</Label>
-            <Input className="mt-1.5" defaultValue={"+808 xxx"} type={"tel"} />
-          </div>
-          <div className="max-w-lg">
-            <Label className="text-sm">Email address</Label>
-            <Input className="mt-1.5" type={"email"} />
-          </div>
-          <div>
-            <Checkbox
-              className="!text-sm"
-              name="uudai"
-              label="Email me news and offers"
-              defaultChecked
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="flex justify-between flex-wrap items-baseline">
+              <h3 className="text-lg font-semibold">Contact infomation</h3>
+              <span className="block text-sm my-1 md:my-0">
+                Do not have an account?{` `}
+                <a href="##" className="text-primary-500 font-medium">
+                  Log in
+                </a>
+              </span>
+            </div>
+            <div className="max-w-lg">
+              <Label className="text-sm">Your phone number</Label>
+              <Input
+                className="mt-1.5"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                type={"tel"}
+              />
+            </div>
+            <div className="max-w-lg">
+              <Label className="text-sm">Email address</Label>
+              <Input
+                className="mt-1.5"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                type={"email"}
+              />
+            </div>
+            <div>
+              <Checkbox
+                className="!text-sm"
+                name="uudai"
+                label="Email me news and offers"
+                defaultChecked
+              />
+            </div>
 
-          {/* ============ */}
-          <div className="flex flex-col sm:flex-row pt-6">
-            <ButtonPrimary
-              className="sm:!px-7 shadow-none"
-              onClick={() => onCloseActive()}
-            >
-              Save and next to Shipping
-            </ButtonPrimary>
-            <ButtonSecondary
-              className="mt-3 sm:mt-0 sm:ml-3"
-              onClick={() => onCloseActive()}
-            >
-              Cancel
-            </ButtonSecondary>
-          </div>
+            {/* ============ */}
+            <div className="flex flex-col sm:flex-row pt-6">
+              <ButtonPrimary
+                className="sm:!px-7 shadow-none"
+                type="submit"
+              >
+                Save and next to Shipping
+              </ButtonPrimary>
+              <ButtonSecondary
+                className="mt-3 sm:mt-0 sm:ml-3"
+                onClick={() => onCloseActive()}
+              >
+                Cancel
+              </ButtonSecondary>
+            </div>
+          </form>
         </div>
       </div>
     );
