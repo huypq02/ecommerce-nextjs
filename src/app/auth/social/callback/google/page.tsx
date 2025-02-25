@@ -18,6 +18,12 @@ const GoogleLogin = () => {
           var data = response.data;
           var code = data.code;
           if (code == 200) {
+             // Store token in localStorage
+            localStorage.setItem('token', data.data);
+            // Clean up the loginType after successful auth
+            localStorage.removeItem('socialLoginType');
+            // Save token to axios header
+            axios.defaults.headers.common['Authorization'] = `Bearer ${data.data}`;
             window.location.href = "/collection";
           }
         }

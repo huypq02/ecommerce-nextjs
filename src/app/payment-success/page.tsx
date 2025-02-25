@@ -4,6 +4,7 @@ import { PAYMENT_SUCCESS_URL } from "@/data/navigation";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import router from "next/router";
 
 const PaymentSuccess = () => {
     const searchParams = useSearchParams();
@@ -11,7 +12,15 @@ const PaymentSuccess = () => {
     let transactionId = searchParams.get("transactionId");
 
     useEffect(() => {
-        let orderData = localStorage.getItem("orderData");
+        let orderDataString = localStorage.getItem("orderData");
+        let orderData;
+        if (orderDataString) {
+            orderData = JSON.parse(orderDataString);
+        } else {
+            console.error('Order data error');
+            // Handle error (show toast, error message, etc.)
+            router.push('/payment/error');
+        }        
         let orderStatusHistory = [
             {
                 date: "21-02-2025",
@@ -28,8 +37,12 @@ const PaymentSuccess = () => {
             transactionId: transactionId
         };
         axios
-            .post(`${PAYMENT_SUCCESS_URL}`, {
+            .post(`${PAYMENT_SUCCESS_URL}`,
                 orderData
+            , {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`}
             })
             .then((response) => {
                 if (response.data && response.data.data) {
