@@ -282,3 +282,5 @@ export const OAUTH2_URL_GOOGLE_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/
 export const OAUTH2_URL_FACEBOOK = BACKEND_BASE_URL + "/user/auth/social";
 export const OAUTH2_URL_FACEBOOK_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
 export const PAYMENT_SUCCESS_URL = BACKEND_BASE_URL + "/order";
+export const ACCOUNT_URL = BACKEND_BASE_URL + "/account";
+
