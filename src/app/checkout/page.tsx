@@ -3,7 +3,6 @@
 import Label from "@/components/Label/Label";
 import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
-import { Product, PRODUCTS } from "@/data/data";
 import { useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Input from "@/shared/Input/Input";
@@ -12,15 +11,12 @@ import PaymentMethod from "./PaymentMethod";
 import ShippingAddress from "./ShippingAddress";
 import Image from "next/image";
 import Link from "next/link";
-import router from "next/router";
 import axios from 'axios'
 import { useRouter } from 'next/navigation';
-
+import { useEffect } from "react";
 
 export interface ContactFormData {
   email: string;
-  firstName: string;
-  lastName: string;
   phone: string;
 }
 
@@ -50,6 +46,25 @@ export interface CheckoutData {
   payment: PaymentMethodData;
 }
 
+interface Order {
+  productDetailId: number;
+  productName: string;
+  presentUnitPrice: number;
+  imageUrls: string[];
+  description: string;
+  category: string;
+  tags: string[];
+  link: "/product-detail/";
+  variantType?: "color" | "image";
+  sizes?: string[];
+  allOfSizes?: string[];
+  status?: "New in" | "limited edition" | "Sold Out" | "50% Discount";
+  rating?: string;
+  numberOfReviews?: number;
+  color: string;
+  quantity: number;
+}
+
 const CheckoutPage = () => {
   const router = useRouter(); // Initialize the router hook
 
@@ -59,8 +74,6 @@ const CheckoutPage = () => {
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     contact: {
       email: '',
-      firstName: '',
-      lastName: '',
       phone: ''
     },
     shipping: {
@@ -84,6 +97,12 @@ const CheckoutPage = () => {
   });
 
   const handleContactInfoSubmit = (contactData: ContactFormData) => {
+    // Check if all required fields are filled
+    if (!contactData.email || !contactData.phone) {
+      alert('Please fill in all contact information fields');
+      return;
+    }
+
     setCheckoutData(prev => ({
       ...prev,
       contact: contactData
@@ -92,6 +111,16 @@ const CheckoutPage = () => {
   };
 
   const handleShippingSubmit = (shippingData: ShippingAddressData) => {
+      // Check if all required fields are filled
+    if (!shippingData.address || 
+        !shippingData.city || 
+        !shippingData.postalCode || 
+        !shippingData.firstName || 
+        !shippingData.lastName) {
+      alert('Please fill in all shipping address fields');
+      return;
+    }
+
     setCheckoutData(prev => ({
       ...prev,
       shipping: shippingData
@@ -109,37 +138,46 @@ const CheckoutPage = () => {
 
   const handleCheckoutSubmit = async () => {
     try {
-      const orderData = {
-        date: new Date().toISOString(),
-        paymentMethod: checkoutData.payment.paymentType === 'Credit-Card' ? 'Card' : 'Home',
-        status: 'Completed',
-        fullName: `${checkoutData.contact.firstName} ${checkoutData.contact.lastName}`,
+      const submitOrder = {
+        orderDetail: orderData.orderDetail.map((item) => {
+          return {
+            productDetailId: item.productDetailId,
+            quantity: item.quantity,
+            presentUnitPrice: item.presentUnitPrice,
+            color: item.color,
+            sizes: item.sizes
+          };
+        }),
+        orderStatusHistory: [
+          {
+            status: "Completed",
+            date: new Date().toISOString()
+          }
+        ],
+        fullName: checkoutData.shipping.firstName + ' ' + checkoutData.shipping.lastName,
+        phone: checkoutData.contact.phone,
         address: checkoutData.shipping.address,
-        apt: checkoutData.shipping.aptSuite,
+        postalCode: checkoutData.shipping.postalCode,
         city: checkoutData.shipping.city,
         country: checkoutData.shipping.country,
         province: checkoutData.shipping.state,
-        postalCode: checkoutData.shipping.postalCode,
-        phone: checkoutData.contact.phone,
-        shippingFee: ship,
-        tax: tax,
-        total: amount,
-        orderDetail: PRODUCTS.map(product => ({
-          quantity: 1, // Assuming quantity is 1 for simplicity
-          presentUnitPrice: product.price,
-          color: 'Black', // Assuming color is Black for simplicity
-          size: 'XS' // Assuming size is XS for simplicity
-        })),
-        orderStatusHistory: []
+        apt: checkoutData.shipping.aptSuite,
+        date: new Date().toISOString(),
+        paymentMethod: checkoutData.payment.paymentType,
+        status: "Completed",
+        shippingFee: orderData.shippingFee,
+        tax: orderData.tax,
+        discount: orderData.discount,
+        total: orderData.total
       };
 
-      if (orderData.paymentMethod === 'Card') {
+      if (submitOrder.paymentMethod === 'Credit-Card') {
         localStorage.setItem('orderData', JSON.stringify(orderData));
         window.location.href = `/checkout/stripe?amount=${orderData.total}`;
       }
 
        // Send orderData to your API
-       const response = await axios.post('http://localhost:8080/order', orderData, {
+       const response = await axios.post('http://localhost:8080/order', submitOrder, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -166,12 +204,6 @@ const CheckoutPage = () => {
     }, 80);
   };
 
-  //Amount money
-  let subTotal = 0;
-  let amount = 0;
-  const tax = 24.9;
-  const ship = 5;
-
   //Order informations
   let userInfo = {
     fullName: "fullName",
@@ -183,40 +215,63 @@ const CheckoutPage = () => {
     province: "provice",
     apt: "apt"
   };
-  let [orderDetail, setOrderDetail] = useState([]);
-  let orderData = {
+  let [orderDetail, setOrderDetail] = useState<Order[]>([]);
+  let [orderData, setOrderData] = useState({
     orderDetail: orderDetail,
     orderStatusHistory: null,
     userInfo: userInfo,
     date: "21-02-2025",
-    paymentMethod: "card",
+    paymentMethod: "Card",
     status: "new",
-    shippingFee: ship,
-    tax: tax,
+    shippingFee: 9000,
+    tax: 0,
     discount: 0,
-    total: amount
+    total: 0
+  });
+
+  useEffect(() => {
+    const storedOrderData = localStorage.getItem("orderData");
+    if (storedOrderData) {
+      setOrderData(JSON.parse(storedOrderData));
+    }
+  }, []);
+
+  const handleQuantityChange = (index: number, newQuantity: number) => {
+    // Update the quantity in orderDetail
+    const updatedOrderDetail = [...orderData.orderDetail];
+    updatedOrderDetail[index].quantity = newQuantity;
+  
+    // Calculate new subtotal
+    const newSubTotal = updatedOrderDetail.reduce(
+      (acc, item) => acc + item.presentUnitPrice * item.quantity, 
+      0
+    );
+    
+    // Calculate new tax and total
+    const newTax = newSubTotal * 0.1;
+    const newTotal = newSubTotal + ship + newTax;
+  
+    // Update orderData with new values
+    const updatedOrderData = {
+      ...orderData,
+      orderDetail: updatedOrderDetail,
+      tax: newTax,
+      total: newTotal
+    };
+  
+    // Update state and localStorage
+    setOrderData(updatedOrderData);
+    localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
   };
 
-  const renderProduct = (item: Product, index: number) => {
-    const { image, price, name } = item;
-    subTotal += price;
-    amount = subTotal + tax + ship;
-
-    orderDetail = [...orderDetail, `Item ${orderDetail.length + 1}`];
-    orderData.orderDetail = orderDetail;
-    orderData.tax = tax;
-    orderData.total = amount;
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("orderData", JSON.stringify(orderData));
-    }
+  const renderProduct = (item: Order, index: number) => {
     return (
       <div key={index} className="relative flex py-7 first:pt-0 last:pb-0">
         <div className="relative h-36 w-24 sm:w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
           <Image
-            src={image}
+            src={item.imageUrls[0]}
             fill
-            alt={name}
+            alt={item.productName}
             className="h-full w-full object-contain object-center"
             sizes="150px"
           />
@@ -228,7 +283,7 @@ const CheckoutPage = () => {
             <div className="flex justify-between ">
               <div className="flex-[1.5] ">
                 <h3 className="text-base font-semibold">
-                  <Link href="/product-detail">{name}</Link>
+                  <Link href="/product-detail">{item.productName}</Link>
                 </h3>
                 <div className="mt-1.5 sm:mt-2.5 flex text-sm text-slate-600 dark:text-slate-300">
                   <div className="flex items-center space-x-1.5">
@@ -274,7 +329,7 @@ const CheckoutPage = () => {
                       />
                     </svg>
 
-                    <span>{`Black`}</span>
+                    <span>{item.color}</span>
                   </div>
                   <span className="mx-4 border-l border-slate-200 dark:border-slate-700 "></span>
                   <div className="flex items-center space-x-1.5">
@@ -309,7 +364,7 @@ const CheckoutPage = () => {
                       />
                     </svg>
 
-                    <span>{`2XL`}</span>
+                    <span>{item.sizes}</span>
                   </div>
                 </div>
 
@@ -329,20 +384,24 @@ const CheckoutPage = () => {
                   </select>
                   <Prices
                     contentClass="py-1 px-2 md:py-1.5 md:px-2.5 text-sm font-medium h-full"
-                    price={price}
+                    price={item.presentUnitPrice}
                   />
                 </div>
               </div>
 
               <div className="hidden flex-1 sm:flex justify-end">
-                <Prices price={price} className="mt-0.5" />
+                <Prices price={item.presentUnitPrice} className="mt-0.5" />
               </div>
             </div>
           </div>
 
           <div className="flex mt-auto pt-4 items-end justify-between text-sm">
             <div className="hidden sm:block text-center relative">
-              <NcInputNumber className="relative z-10" />
+              <NcInputNumber
+                defaultValue={item.quantity}
+                onChange={(value) => handleQuantityChange(index, value)}
+                className="relative z-10" 
+              />
             </div>
 
             <a
@@ -375,7 +434,7 @@ const CheckoutPage = () => {
             }}
           />
         </div>
-
+  
         <div id="ShippingAddress" className="scroll-mt-24">
           <ShippingAddress
             isActive={tabActive === "ShippingAddress"}
@@ -391,7 +450,7 @@ const CheckoutPage = () => {
             }}
           />
         </div>
-
+  
         <div id="PaymentMethod" className="scroll-mt-24">
           <PaymentMethod
             isActive={tabActive === "PaymentMethod"}
@@ -408,6 +467,12 @@ const CheckoutPage = () => {
     );
   };
 
+  // Calculate subtotal, tax, and total
+  const subTotal = orderData.orderDetail.reduce((acc, item) => acc + item.presentUnitPrice * item.quantity, 0);
+  const ship = 9000;
+  const tax = subTotal * 0.1;
+  const total = subTotal + ship + tax;
+  
   return (
     <div className="nc-CheckoutPage">
       <main className="container py-16 lg:pb-28 lg:pt-20 ">
@@ -427,16 +492,16 @@ const CheckoutPage = () => {
             <span className="underline">Checkout</span>
           </div>
         </div>
-
+  
         <div className="flex flex-col lg:flex-row">
           <div className="flex-1">{renderLeft()}</div>
-
+  
           <div className="flex-shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700 my-10 lg:my-0 lg:mx-10 xl:lg:mx-14 2xl:mx-16 "></div>
-
+  
           <div className="w-full lg:w-[36%] ">
             <h3 className="text-lg font-semibold">Order summary</h3>
             <div className="mt-8 divide-y divide-slate-200/70 dark:divide-slate-700 ">
-              {[PRODUCTS[0], PRODUCTS[2], PRODUCTS[3]].map(renderProduct)}
+              {orderData.orderDetail.map((product, index) => renderProduct(product, index))}
             </div>
 
             <div className="mt-10 pt-6 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-700 ">
@@ -453,33 +518,33 @@ const CheckoutPage = () => {
               <div className="mt-4 flex justify-between py-2.5">
                 <span>Subtotal</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  ${`${subTotal}`}
+                  {`${subTotal}`} VND
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Shipping estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  ${`${ship}`}
+                  {`${ship}`} VND
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Tax estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  ${`${tax}`}
+                  {`${tax}`} VND
                 </span>
               </div>
               <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                 <span>Order total</span>
-                <span>${`${amount}`}</span>
+                <span>{`${total}`} VND</span>
               </div>
             </div>
             {checkoutData.payment.paymentType === 'card' ? (
-              <ButtonPrimary href={`/checkout/stripe?amount=${amount}`} className="mt-8 w-full">
-              Confirm order
+              <ButtonPrimary href={`/checkout/stripe?amount=${total}`} className="mt-8 w-full">
+                Confirm order
               </ButtonPrimary>
             ) : (
               <ButtonPrimary onClick={handleCheckoutSubmit} className="mt-8 w-full">
-              Confirm order
+                Confirm order
               </ButtonPrimary>
             )}
             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
