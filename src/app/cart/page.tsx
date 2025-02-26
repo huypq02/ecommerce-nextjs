@@ -8,17 +8,21 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 interface CartItem {
+  productDetailId: string;
   productName: string;
   quantity: number;
   size: string;
   price: number;
   imageUrls: string[];
+  color: string;
 }
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -163,8 +167,46 @@ const CartPage = () => {
   };
 
   const subtotal = calculateSubtotal();
+  const shippingFee = 90000; // 90,000 VND
   const tax = subtotal * 0.1;
-  const orderTotal = subtotal + tax;
+  const orderTotal = subtotal + tax + shippingFee;
+
+  const handleCheckout = () => {
+    const orderData = {
+      orderDetail: cartItems.map((item) => ({
+        productDetailId: item.productDetailId,
+        productName: item.productName,
+        quantity: item.quantity,
+        presentUnitPrice: item.price,
+        color: item.color,
+        imageUrls: item.imageUrls,
+        size: item.size,
+      })),
+      orderStatusHistory: null,
+      userInfo: {
+        fullName: "fullName",
+        phone: "phone",
+        address: "address",
+        postalCode: "postalCode",
+        city: "city",
+        country: "country",
+        province: "province",
+        apt: "apt",
+      },
+      date: new Date().toISOString(),
+      paymentMethod: "home",
+      status: "new",
+      shippingFee: 9000,
+      tax: tax,
+      discount: 0,
+      total: orderTotal,
+    };
+
+    console.log("orderData", orderData);
+    
+    localStorage.setItem("orderData", JSON.stringify(orderData));
+    router.push("/checkout");
+  };
 
   return (
     <div className="nc-CartPage">
@@ -206,7 +248,7 @@ const CartPage = () => {
                 <div className="flex justify-between py-4">
                   <span>Shipping estimate</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    $5.00
+                    {shippingFee.toFixed(2)} VND
                   </span>
                 </div>
                 <div className="flex justify-between py-4">
@@ -220,7 +262,7 @@ const CartPage = () => {
                   <span>{orderTotal.toFixed(2)} VND</span>
                 </div>
               </div>
-              <ButtonPrimary href="/checkout" className="mt-8 w-full">
+              <ButtonPrimary onClick={handleCheckout} className="mt-8 w-full">
                 Checkout
               </ButtonPrimary>
               <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
