@@ -45,6 +45,13 @@ const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) =>
   const selectedImage = data.variants?.[0]?.images[0] || "Unknow";
   const sizeList = Array.from(new Set(data.variants.map((variant) => variant.size)));
 
+  // ✅ Đảm bảo cập nhật state sau render
+useEffect(() => {
+  if (selectedProduct) {
+    setShowModalQuickView(true);
+  }
+}, [selectedProduct]);
+
   const notifyAddTocart = () => {
     toast.custom(
       (t) => (
