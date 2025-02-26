@@ -28,7 +28,11 @@ const PaymentMethod: FC<Props> = ({
     "Credit-Card" | "Home"
   >("Credit-Card");
 
-  const [formData, setFormData] = useState<PaymentMethodData>(initialData);
+  // At the top of your component, update the initial state
+  const [formData, setFormData] = useState<PaymentMethodData>({
+    ...initialData,
+    paymentType: methodActive // Set default payment type
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,8 +41,18 @@ const PaymentMethod: FC<Props> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    formData.paymentType = methodActive;
-    onSubmit(formData);
+    
+    // Update formData with payment type using setState
+    setFormData(prev => ({
+      ...prev,
+      paymentType: methodActive
+    }));
+
+    // Use the updated formData in onSubmit
+    onSubmit({
+      ...formData,
+      paymentType: methodActive
+    });
     onCloseActive();
   };
 

@@ -28,6 +28,9 @@ const ShippingAddress: FC<Props> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'country' && value === '') {
+      return; // Don't update if no country is selected
+    }
     setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
@@ -179,9 +182,10 @@ const ShippingAddress: FC<Props> = ({
                 <Select
                   className="mt-1.5"
                   name="country"
-                  value={formData.country}
+                  defaultValue="Vietnam"
                   onChange={handleChange}
                 >
+                  <option value="Vietnam">Vietnam</option>
                   <option value="United States">United States</option>
                   <option value="Canada">Canada</option>
                   <option value="Mexico">Mexico</option>
