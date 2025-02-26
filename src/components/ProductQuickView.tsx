@@ -22,6 +22,7 @@ import AccordionInfo from "@/components/AccordionInfo";
 import Image from "next/image";
 import Link from "next/link";
 import { ProductExtend } from "@/app/collection/page";
+import axios from "axios";
 
 export interface ProductQuickViewProps {
   className?: string;
@@ -58,19 +59,58 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({ className = "",data }) =>
 
   const [qualitySelected, setQualitySelected] = useState(1);
 
-  const notifyAddTocart = () => {
-    toast.custom(
-      (t) => (
-        <NotifyAddTocart
-          productImage={variants[0].images[0]}
-          qualitySelected={qualitySelected}
-          show={t.visible}
-          sizeSelected={sizeList[selectedSize]}
-          colorSelected={colorList[selectedColor]}
-        />
-      ),
-      { position: "top-right", id: "nc-product-notify", duration: 3000 }
-    );
+  const notifyAddTocart = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Check if user is logged in
+      if (!token) {
+        toast.error("Please login to add items to cart");
+        return;
+      }
+      
+      // Prepare data for API call
+      const cartItem = {
+        productDetailID: data.id, // Use the selected variant ID or product ID
+        quantity: qualitySelected,
+      };
+      
+      // Make API call to add item to cart
+      // Import axios at the top of the file if not already imported
+      const response = await axios.post('http://localhost:8080/cart/add', cartItem, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Check if request was successful (axios throws error on non-2xx responses)
+      // So we need to check response.data or any specific property your API returns
+      if (!response.data) {
+        throw new Error('Failed to add item to cart');
+      }
+      
+      // Show success notification
+      toast.custom(
+        (t) => (
+          <NotifyAddTocart
+            productImage={variants[0].images[0]}
+            qualitySelected={qualitySelected}
+            show={t.visible}
+            sizeSelected={sizeList[selectedSize]}
+            colorSelected={colorList[selectedColor]}
+          />
+        ),
+        { position: "top-right", id: "nc-product-notify", duration: 3000 }
+      );
+      
+      // Optional: You can also refresh the cart count or update cart state here
+      
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      toast.error("Failed to add item to cart");
+    }
   };
 
   const renderVariants = () => {
