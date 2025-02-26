@@ -2,23 +2,76 @@
 
 import { Popover, Transition } from "@/app/headlessui";
 import Prices from "@/components/Prices";
-import { Product, PRODUCTS } from "@/data/data";
-import { Fragment } from "react";
+import { Product } from "@/data/data";
+import { Fragment, useEffect, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Image from "next/image";
 import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+
+
+interface CartItem {
+  productId: string;
+  productDetailId: string;
+  productName: string;
+  quantity: number;
+  size: string;
+  price: number;
+  imageUrls: string[];
+  color: string;
+}
+
+const fetchCartData = async () => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const response = await axios.get("http://localhost:8080/cart", {
+      headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+      }
+    });
+    
+    if (!response.data) {
+      throw new Error("Failed to fetch cart data");
+    }
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching cart data:", error);
+    return [];
+  }
+};
 
 export default function CartDropdown() {
-  const renderProduct = (item: Product, index: number, close: () => void) => {
-    const { name, price, image } = item;
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [subtotal, setSubtotal] = useState(0);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadCartData = async () => {
+      const data = await fetchCartData();
+      if (Array.isArray(data)) {
+        setCartItems(data);
+        const subtotal = data.reduce((acc: number, item: CartItem) => acc + item.price * item.quantity, 0);
+        setSubtotal(subtotal);
+      } else {
+        console.error("Cart data is not an array:", data);
+      }
+    };
+    loadCartData();
+  }, []);
+
+  const renderProduct = (item: CartItem, index: number, close: () => void) => {
+    const { productName, price, imageUrls, size, quantity } = item;
     return (
       <div key={index} className="flex py-5 last:pb-0">
         <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
           <Image
             fill
-            src={image}
-            alt={name}
+            src={imageUrls[0]}
+            alt={productName}
             className="h-full w-full object-contain object-center"
           />
           <Link
@@ -34,20 +87,20 @@ export default function CartDropdown() {
               <div>
                 <h3 className="text-base font-medium ">
                   <Link onClick={close} href={"/product-detail"}>
-                    {name}
+                    {productName}
                   </Link>
                 </h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   <span>{`Natural`}</span>
                   <span className="mx-2 border-l border-slate-200 dark:border-slate-700 h-4"></span>
-                  <span>{"XL"}</span>
+                  <span>{`${item.size}`}</span>
                 </p>
               </div>
               <Prices price={price} className="mt-0.5" />
             </div>
           </div>
           <div className="flex flex-1 items-end justify-between text-sm">
-            <p className="text-gray-500 dark:text-slate-400">{`Qty 1`}</p>
+            <p className="text-gray-500 dark:text-slate-400">{`Qty ${quantity}`}</p>
 
             <div className="flex">
               <button
@@ -62,6 +115,42 @@ export default function CartDropdown() {
       </div>
     );
   };
+  const handleCheckout = () => {
+    const orderData = {
+      orderDetail: cartItems.map((item) => ({
+        productDetailId: item.productDetailId,
+        productName: item.productName,
+        quantity: item.quantity,
+        presentUnitPrice: item.price,
+        color: item.color,
+        imageUrls: item.imageUrls,
+        size: item.size,
+      })),
+      orderStatusHistory: null,
+      userInfo: {
+        fullName: "fullName",
+        phone: "phone",
+        address: "address",
+        postalCode: "postalCode",
+        city: "city",
+        country: "country",
+        province: "province",
+        apt: "apt",
+      },
+      date: new Date().toISOString(),
+      paymentMethod: "home",
+      status: "new",
+      shippingFee: 9000,
+      tax: subtotal * 0.1,
+      discount: 0,
+      total: subtotal + 9000 + subtotal * 0.1,
+    };
+
+    console.log("orderData", orderData);
+    
+    localStorage.setItem("orderData", JSON.stringify(orderData));
+    router.push("/checkout");
+  };
 
   return (
     <Popover className="relative">
@@ -73,7 +162,7 @@ export default function CartDropdown() {
                  group w-10 h-10 sm:w-12 sm:h-12 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 relative`}
           >
             <div className="w-3.5 h-3.5 flex items-center justify-center bg-primary-500 absolute top-1.5 right-1.5 rounded-full text-[10px] leading-none text-white font-medium">
-              <span className="mt-[1px]">3</span>
+              <span className="mt-[1px]">{cartItems.length}</span>
             </div>
             <svg
               className="w-6 h-6"
@@ -132,9 +221,7 @@ export default function CartDropdown() {
                   <div className="max-h-[60vh] p-5 overflow-y-auto hiddenScrollbar">
                     <h3 className="text-xl font-semibold">Shopping cart</h3>
                     <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                      {[PRODUCTS[0], PRODUCTS[1], PRODUCTS[2]].map(
-                        (item, index) => renderProduct(item, index, close)
-                      )}
+                      {Array.isArray(cartItems) && cartItems.map((item, index) => renderProduct(item, index, close))}
                     </div>
                   </div>
                   <div className="bg-neutral-50 dark:bg-slate-900 p-5">
@@ -145,7 +232,7 @@ export default function CartDropdown() {
                           Shipping and taxes calculated at checkout.
                         </span>
                       </span>
-                      <span className="">$299.00</span>
+                      <span className="">{subtotal.toFixed(2)} VND</span>
                     </p>
                     <div className="flex space-x-2 mt-5">
                       <ButtonSecondary
@@ -156,8 +243,10 @@ export default function CartDropdown() {
                         View cart
                       </ButtonSecondary>
                       <ButtonPrimary
-                        href="/checkout"
-                        onClick={close}
+                        onClick={() => {
+                          handleCheckout();
+                          close();
+                        }}
                         className="flex-1"
                       >
                         Check out

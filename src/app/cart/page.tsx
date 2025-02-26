@@ -167,7 +167,7 @@ const CartPage = () => {
   };
 
   const subtotal = calculateSubtotal();
-  const shippingFee = 90000; // 90,000 VND
+  const shippingFee = 9000; // 9,000 VND
   const tax = subtotal * 0.1;
   const orderTotal = subtotal + tax + shippingFee;
 
