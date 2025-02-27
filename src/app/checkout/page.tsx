@@ -188,7 +188,9 @@ const CheckoutPage = () => {
          throw new Error('Order failed');
        }
  
-      // Handle successful checkout       
+      // Handle successful checkout
+      // Clear orderData from localStorage after successful order
+      localStorage.removeItem('orderData');
       router.push('/payment/success');    
      } catch (error) {
        console.error('Checkout error:', error);
@@ -262,6 +264,53 @@ const CheckoutPage = () => {
     // Update state and localStorage
     setOrderData(updatedOrderData);
     localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
+  };
+
+  // Add this function to handle item removal
+  const handleRemoveItem = async (productDetailId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      // Call API to remove item from cart
+      const response = await axios.delete(`http://localhost:8080/cart/${productDetailId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        // Update the local state by filtering out the removed item
+        const updatedOrderDetail = orderData.orderDetail.filter(
+          item => item.productDetailId !== productDetailId
+        );
+        
+        // Recalculate subtotal, tax, and total
+        const newSubTotal = updatedOrderDetail.reduce(
+          (acc, item) => acc + item.presentUnitPrice * item.quantity, 
+          0
+        );
+        const newTax = newSubTotal * 0.1;
+        const newTotal = newSubTotal + ship + newTax;
+        
+        // Update orderData with new values
+        const updatedOrderData = {
+          ...orderData,
+          orderDetail: updatedOrderDetail,
+          tax: newTax,
+          total: newTotal
+        };
+        
+        // Update state and localStorage
+        setOrderData(updatedOrderData);
+        localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
+        
+        console.log("Item removed successfully");
+      } else {
+        console.error("Failed to remove item from cart");
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
   };
 
   const renderProduct = (item: Order, index: number) => {
@@ -406,6 +455,10 @@ const CheckoutPage = () => {
 
             <a
               href="##"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveItem(item.productDetailId);
+              }}
               className="relative z-10 flex items-center mt-3 font-medium text-primary-6000 hover:text-primary-500 text-sm "
             >
               <span>Remove</span>
