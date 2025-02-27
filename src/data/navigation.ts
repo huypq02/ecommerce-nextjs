@@ -111,9 +111,40 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/signup", name: "Signup" },
     ],
   },
+  {
+    id: ncNanoId(),
+    href: "/#",
+    name: "Admin Page",
+    children: [
+      { id: ncNanoId(), href: "/admin/product", name: "Admin Product Page" },
+    ],
+  },
 ];
 
 const OTHER_PAGE_CHILD: NavItemType[] = [
+  {
+    id: ncNanoId(),
+    href: "/admin/product",
+    name: "Admin Page",
+    type: "dropdown",
+    children: [
+      {
+        id: ncNanoId(),
+        href: "/admin/product",
+        name: "Admin Product Page",
+      },
+      {
+        id: ncNanoId(),
+        href: "/admin/user",
+        name: "Admin User Page",
+      },
+      {
+        id: ncNanoId(),
+        href: "/admin/order",
+        name: "Admin Order Page",
+      },
+    ]
+  },
   {
     id: ncNanoId(),
     href: "/",
@@ -210,11 +241,6 @@ const OTHER_PAGE_CHILD: NavItemType[] = [
         id: ncNanoId(),
         href: "/subscription",
         name: "Subscription",
-      },
-      {
-        id: ncNanoId(),
-        href: "/user/auth/social/callback",
-        name: "OAuth2 Callback",
       },
     ],
   },
