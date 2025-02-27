@@ -63,6 +63,67 @@ export default function CartDropdown() {
     loadCartData();
   }, []);
 
+  // Add this function to CartDropdown component
+  const handleRemoveItem = async (productDetailId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      // Call API to remove item from cart
+      const response = await axios.delete(`http://localhost:8080/cart/${productDetailId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        // Update the local state by filtering out the removed item
+        setCartItems(prevItems => prevItems.filter(item => item.productDetailId !== productDetailId));
+        
+        // Recalculate subtotal
+        const updatedCartItems = cartItems.filter(item => item.productDetailId !== productDetailId);
+        const newSubtotal = updatedCartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        setSubtotal(newSubtotal);
+        
+        // Update orderData in localStorage if it exists
+        const storedOrderData = localStorage.getItem("orderData");
+        if (storedOrderData) {
+          try {
+            const orderData = JSON.parse(storedOrderData);
+            if (orderData.orderDetail) {
+              // Filter out the removed item
+              orderData.orderDetail = orderData.orderDetail.filter(
+                (item: any) => item.productDetailId !== productDetailId
+              );
+              
+              // Recalculate totals
+              const newSubTotal = orderData.orderDetail.reduce(
+                (acc: number, item: any) => acc + item.presentUnitPrice * item.quantity, 
+                0
+              );
+              const newTax = newSubTotal * 0.1;
+              const newTotal = newSubTotal + 9000 + newTax; // 9000 is shipping fee
+              
+              // Update the orderData
+              orderData.tax = newTax;
+              orderData.total = newTotal;
+              
+              // Save back to localStorage
+              localStorage.setItem("orderData", JSON.stringify(orderData));
+            }
+          } catch (error) {
+            console.error("Error updating localStorage:", error);
+          }
+        }
+        
+        console.log("Item removed successfully");
+      } else {
+        console.error("Failed to remove item from cart");
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
+  };
+
   const renderProduct = (item: CartItem, index: number, close: () => void) => {
     const { productName, price, imageUrls, size, quantity } = item;
     return (
@@ -106,6 +167,10 @@ export default function CartDropdown() {
               <button
                 type="button"
                 className="font-medium text-primary-6000 dark:text-primary-500 "
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRemoveItem(item.productDetailId);
+                }}
               >
                 Remove
               </button>

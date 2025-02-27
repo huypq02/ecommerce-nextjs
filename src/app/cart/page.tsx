@@ -72,6 +72,55 @@ const CartPage = () => {
     );
   };
 
+  // Add this function to handle item removal
+  const handleRemoveItem = async (productDetailId: string) => {
+    try {
+      // Call the API to remove the item from the cart
+      const response = await axios.delete(`http://localhost:8080/cart/${productDetailId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        }, 
+      });
+    
+      if (response.data.code === 200) {
+        // Remove the item from the local state
+        setCartItems(prevItems => prevItems.filter(item => item.productDetailId !== productDetailId));
+      
+        // Update localStorage orderData
+        const storedOrderData = localStorage.getItem("orderData");
+        if (storedOrderData) {
+          const orderData = JSON.parse(storedOrderData);
+          // Filter out the removed item
+          orderData.orderDetail = orderData.orderDetail.filter(
+            (item: any) => item.productDetailId !== productDetailId
+          );
+        
+          // Recalculate totals
+          const subtotal = orderData.orderDetail.reduce(
+            (total: number, item: any) => total + item.presentUnitPrice * item.quantity, 
+            0
+          );
+          const tax = subtotal * 0.1;
+          const total = subtotal + tax + 9000; // 9000 is shipping fee
+          
+          // Update the orderData with new values
+          orderData.tax = tax;
+          orderData.total = total;
+          
+          // Save back to localStorage
+          localStorage.setItem("orderData", JSON.stringify(orderData));
+        }
+      
+        console.log("Item removed successfully");
+      } else {
+        console.error("Failed to remove item from cart");
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
+  };
+
   const renderProduct = (item: CartItem, index: number) => {
     const { productName, price, imageUrls, size, quantity } = item;
 
@@ -152,6 +201,10 @@ const CartPage = () => {
 
             <a
               href="##"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveItem(item.productDetailId);
+              }}
               className="relative z-10 flex items-center mt-3 font-medium text-primary-6000 hover:text-primary-500 text-sm "
             >
               <span>Remove</span>
