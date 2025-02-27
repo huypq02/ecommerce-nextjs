@@ -9,7 +9,7 @@ import Textarea from "@/shared/Textarea/Textarea";
 import { avatarImgs } from "@/contains/fakeData";
 import Image from "next/image";
 import axios from "axios";
-import { ACCOUNT_URL } from "@/data/navigation";
+import { ACCOUNT_URL, UPLOAD_URL } from "@/data/navigation";
 import { useElements } from "@stripe/react-stripe-js";
 import { setEnvironmentData } from "worker_threads";
 
@@ -21,6 +21,9 @@ const AccountPage = () => {
   const [birthday, setBirthday] = useState("");
   const [description, setDescription] = useState("");
   const [gender, setGender] = useState("");
+  const [image, setImage] = useState<File>();
+  const [imageSrc, setImageSrc] = useState("");
+
 
   useEffect(() => {
     axios.get(ACCOUNT_URL, {
@@ -43,6 +46,7 @@ const AccountPage = () => {
             setBirthday(data.userInfo.birthday);
             setDescription(data.userInfo.description);
             setGender(data.userInfo.gender);
+            setImageSrc(UPLOAD_URL + "/" + data.userInfo.image);
           }
         }
       }
@@ -62,14 +66,25 @@ const AccountPage = () => {
         phone,
         birthday,
         description,
-        gender
+        gender,
+        image
     }, {
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
     console.log(response);
+    if (response.data && response.data.data) {
+      var data = response.data.data;
+      var code = response.data.code;
+      if (code == 200) {
+        console.log(data);
+        if (data.userInfo) {
+          setImageSrc(UPLOAD_URL + "/" + data.userInfo.image);
+        }
+      }
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,8 +111,15 @@ const AccountPage = () => {
       case "description":
         setDescription(value);
         break;
+      case "image":
+        const files = e.target.files;
+
+        if (files && files.length > 0) {
+          setImage(files[0]);
+        }
+        break;
       default:
-          break;
+        break;
     }
 
   };
@@ -114,7 +136,7 @@ const AccountPage = () => {
             {/* AVATAR */}
             <div className="relative rounded-full overflow-hidden flex">
               <Image
-                src={avatarImgs[2]}
+                src={imageSrc}
                 alt="avatar"
                 width={128}
                 height={128}
@@ -142,6 +164,8 @@ const AccountPage = () => {
               <input
                 type="file"
                 className="absolute inset-0 opacity-0 cursor-pointer"
+                name="image"
+                onChange={handleChange}
               />
             </div>
           </div>
