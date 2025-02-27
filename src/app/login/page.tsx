@@ -1,5 +1,5 @@
 'use client';
-import React, { FC, use } from "react";
+import React, { FC, useState } from "react";
 import facebookSvg from "@/images/Facebook.svg";
 import twitterSvg from "@/images/Twitter.svg";
 import googleSvg from "@/images/Google.svg";
@@ -9,10 +9,31 @@ import Image from "next/image";
 import Link from "next/link";
 import axios from "axios";
 import { OAUTH2_URL_GOOGLE } from "@/data/navigation";
+import { useRouter } from "next/navigation";
 
 function handleGoogleLogin() {
     axios
       .get(OAUTH2_URL_GOOGLE + "?loginType=google")
+      .then((response) => {
+        if (response.data && response.data.data) {        
+          console.log(response);
+  
+          var data = response.data;
+          var code = data.code;
+          if (code == 200) {
+            var path = data.data;
+            window.location = path;
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Lỗi khi gọi API: ", error);
+      });
+  };
+
+  function handleFacebookLogin() {
+    axios
+      .get(OAUTH2_URL_GOOGLE + "?loginType=facebook")
       .then((response) => {
         if (response.data && response.data.data) {        
           console.log(response);
@@ -35,6 +56,7 @@ const loginSocials = [
     name: "Continue with Facebook",
     href: "#",
     icon: facebookSvg,
+    onclick: handleFacebookLogin,
   },
   {
     name: "Continue with Twitter",
@@ -49,7 +71,46 @@ const loginSocials = [
   },
 ];
 
-const PageLogin = () => {  
+const PageLogin = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      const response = await axios.post("http://localhost:8080/login", {
+        email,
+        password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.data && response.data.code === 200) {
+        // Save token to localStorage
+        localStorage.setItem("token", response.data.data);
+        console.log("Login successful!");
+        
+        // Redirect to home page or dashboard
+        router.push("/collection");
+      } else {
+        setError("Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("An error occurred during login. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   return (
     <div className={`nc-PageLogin`} data-nc-id="PageLogin">
       <div className="container mb-24 lg:mb-32">
@@ -85,7 +146,10 @@ const PageLogin = () => {
             <div className="absolute left-0 w-full top-1/2 transform -translate-y-1/2 border border-neutral-100 dark:border-neutral-800"></div>
           </div>
           {/* FORM */}
-          <form className="grid grid-cols-1 gap-6" action="#" method="post">
+          <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="text-red-500 text-center text-sm">{error}</div>
+            )}
             <label className="block">
               <span className="text-neutral-800 dark:text-neutral-200">
                 Email address
@@ -94,6 +158,9 @@ const PageLogin = () => {
                 type="email"
                 placeholder="example@example.com"
                 className="mt-1"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </label>
             <label className="block">
@@ -103,9 +170,17 @@ const PageLogin = () => {
                   Forgot password?
                 </Link>
               </span>
-              <Input type="password" className="mt-1" />
+              <Input 
+                type="password" 
+                className="mt-1" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </label>
-            <ButtonPrimary type="submit">Continue</ButtonPrimary>
+            <ButtonPrimary type="submit" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Continue"}
+            </ButtonPrimary>
           </form>
 
           {/* ==== */}
