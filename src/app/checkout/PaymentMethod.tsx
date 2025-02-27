@@ -354,6 +354,21 @@ const PaymentMethod: FC<Props> = ({
             <ButtonPrimary
               className="w-full max-w-[240px]"
               type="submit"
+              onClick={() => {
+              // Create temporary toast notification
+              const toast = document.createElement("div");
+              toast.className = "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity";
+              toast.textContent = "Order saved!";
+              document.body.appendChild(toast);
+              
+              // Remove after 2 seconds
+              setTimeout(() => {
+                toast.style.opacity = "0";
+                setTimeout(() => {
+                document.body.removeChild(toast);
+                }, 300);
+              }, 2000);
+              }}
             >
               Save and next to Confirm Order
             </ButtonPrimary>
