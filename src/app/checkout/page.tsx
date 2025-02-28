@@ -172,8 +172,22 @@ const CheckoutPage = () => {
       };
 
       if (submitOrder.paymentMethod === 'Credit-Card') {
-        localStorage.setItem('orderData', JSON.stringify(orderData));
-        window.location.href = `/checkout/stripe?amount=${orderData.total}`;
+        localStorage.setItem('submitOrder', JSON.stringify(submitOrder));
+        // Fetch real-time exchange rate and convert VND to USD
+        try {
+          // Fetch the latest exchange rate
+          const exchangeRateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+          const vndToUsdRate = 1 / exchangeRateRes.data.rates.VND;
+          const totalUSD = Math.round((submitOrder.total * vndToUsdRate) * 100) / 100;
+          window.location.href = `/checkout/stripe?amount=${totalUSD}`;
+        } catch (error) {
+          console.error('Error fetching exchange rate:', error);
+          // Fallback to approximate rate if API fails
+          const fallbackRate = 1 / 23000;
+          const totalUSD = Math.round((submitOrder.total * fallbackRate) * 100) / 100;
+          window.location.href = `/checkout/stripe?amount=${totalUSD}`;
+        }
+        return;
       }
 
        // Send orderData to your API
