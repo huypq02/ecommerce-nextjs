@@ -41,7 +41,7 @@ const AccountPage = () => {
           setEmail(data.email);          
           if (data.userInfo) {
             setFullName(data.userInfo.fullName);
-            setAddress(data.userInfo.addreess);
+            setAddress(data.userInfo.address);
             setPhone(data.userInfo.phone);
             setBirthday(data.userInfo.birthday);
             setDescription(data.userInfo.description);

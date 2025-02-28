@@ -1,9 +1,12 @@
 "use client";
 
+import { ACCOUNT_URL } from "@/data/navigation";
 import { Route } from "@/routers/types";
+import Avatar from "@/shared/Avatar/Avatar";
+import axios from "axios";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FC } from "react";
 
 export interface CommonLayoutProps {
@@ -38,6 +41,38 @@ const pages: {
 
 const CommonLayout: FC<CommonLayoutProps> = ({ children }) => {
   const pathname = usePathname();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+
+  useEffect(() => {
+    axios.get(ACCOUNT_URL, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    .then((response) => {
+      if (response.data && response.data.data) {
+        var data = response.data.data;
+        var code = response.data.code;
+        if (code == 200) {
+          console.log(data);
+          setEmail(data.email);          
+          if (data.userInfo) {
+            setFullName(data.userInfo.fullName);
+            setAddress(data.userInfo.address);
+
+            data.userInfo.email = data.email;
+            localStorage.setItem("userInfo", JSON.stringify(data.userInfo));
+          }
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Lỗi khi gọi API:", error);
+    });
+  }, []);
 
   return (
     <div className="nc-AccountCommonLayout container">
@@ -47,9 +82,9 @@ const CommonLayout: FC<CommonLayoutProps> = ({ children }) => {
             <h2 className="text-3xl xl:text-4xl font-semibold">Account</h2>
             <span className="block mt-4 text-neutral-500 dark:text-neutral-400 text-base sm:text-lg">
               <span className="text-slate-900 dark:text-slate-200 font-semibold">
-                Enrico Cole,
+                {fullName},
               </span>{" "}
-              ciseco@gmail.com · Los Angeles, CA
+              {email} · {address}
             </span>
           </div>
           <hr className="mt-10 border-slate-200 dark:border-slate-700"></hr>
