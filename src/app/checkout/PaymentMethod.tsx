@@ -132,51 +132,6 @@ const PaymentMethod: FC<Props> = ({
               active ? "block" : "hidden"
             }`}
           >
-            <div className="max-w-lg">
-              <Label className="text-sm">Card number</Label>
-              <Input
-                autoComplete="off"
-                className="mt-1.5"
-                type={"text"}
-                name="cardNumber"
-                value={formData.cardNumber}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="max-w-lg">
-              <Label className="text-sm">Name on Card</Label>
-              <Input
-                autoComplete="off"
-                className="mt-1.5"
-                name="cardHolder"
-                value={formData.cardHolder}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-              <div className="sm:w-2/3">
-                <Label className="text-sm">Expiration date (MM/YY)</Label>
-                <Input
-                  autoComplete="off"
-                  className="mt-1.5"
-                  placeholder="MM/YY"
-                  name="expiryDate"
-                  value={formData.expiryDate}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="flex-1">
-                <Label className="text-sm">CVC</Label>
-                <Input
-                  autoComplete="off"
-                  className="mt-1.5"
-                  placeholder="CVC"
-                  name="cvv"
-                  value={formData.cvv}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
