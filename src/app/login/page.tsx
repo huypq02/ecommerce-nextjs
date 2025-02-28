@@ -32,8 +32,12 @@ function handleGoogleLogin() {
   };
 
   function handleFacebookLogin() {
+    // Store loginType in localStorage before redirect
+    const type = "facebook";
+    localStorage.setItem('socialLoginType', type);
+
     axios
-      .get(OAUTH2_URL_GOOGLE + "?loginType=facebook")
+      .get(OAUTH2_URL_GOOGLE + "?loginType=" + type)
       .then((response) => {
         if (response.data && response.data.data) {        
           console.log(response);
