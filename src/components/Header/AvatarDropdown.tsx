@@ -7,11 +7,13 @@ import Avatar from "@/shared/Avatar/Avatar";
 import SwitchDarkMode2 from "@/shared/SwitchDarkMode/SwitchDarkMode2";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { UPLOAD_URL } from "@/data/navigation";
 
 export default function AvatarDropdown() {
   const router = useRouter();
   const [userName, setUserName] = useState("User");
   const [userLocation, setUserLocation] = useState("");
+  const [image, setImage] = useState("");
 
   useEffect(() => {
     // Get user info from localStorage if available
@@ -19,11 +21,14 @@ export default function AvatarDropdown() {
     if (userInfo) {
       try {
         const parsedInfo = JSON.parse(userInfo);
-        if (parsedInfo.name) {
-          setUserName(parsedInfo.name);
+        if (parsedInfo.fullName) {
+          setUserName(parsedInfo.fullName);
         }
-        if (parsedInfo.location) {
-          setUserLocation(parsedInfo.location);
+        if (parsedInfo.address) {
+          setUserLocation(parsedInfo.address);
+        }
+        if (parsedInfo.image) {
+          setImage(UPLOAD_URL + "/" + parsedInfo.image);
         }
       } catch (error) {
         console.error("Error parsing user info:", error);
@@ -92,7 +97,7 @@ export default function AvatarDropdown() {
                 <div className="overflow-hidden rounded-3xl shadow-lg ring-1 ring-black ring-opacity-5">
                   <div className="relative grid grid-cols-1 gap-6 bg-white dark:bg-neutral-800 py-7 px-6">
                     <div className="flex items-center space-x-3">
-                      <Avatar imgUrl={avatarImgs[7]} sizeClass="w-12 h-12" />
+                      <Avatar imgUrl={image} sizeClass="w-12 h-12" />
 
                       <div className="flex-grow">
                         <h4 className="font-semibold">{userName}</h4>
