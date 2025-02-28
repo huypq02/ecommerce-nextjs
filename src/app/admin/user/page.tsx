@@ -560,7 +560,102 @@ const AdminUserPage = () => {
         </div>
         
         {/* Edit user form implementation */}
-        {/* ... (form code) ... */}
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-xl p-6">
+          <h3 className="text-xl font-semibold mb-6">Edit User</h3>
+          
+          {updateMessage.text && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              updateMessage.type === "success" 
+                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+            }`}>
+              {updateMessage.text}
+            </div>
+          )}
+          
+          <form onSubmit={handleUpdateUser} className="space-y-5">
+            <div>
+              <Label>User ID</Label>
+              <Input
+                type="text"
+                value={selectedUserForEdit?.id || ""}
+                disabled
+                className="mt-1.5 bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed"
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                User IDs cannot be changed
+              </p>
+            </div>
+            
+            <div>
+              <Label>Email</Label>
+              <Input
+                required
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="mt-1.5"
+              />
+            </div>
+
+            <div>
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Leave blank to keep current password"
+                className="mt-1.5"
+                minLength={editPassword ? 6 : 0}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Only fill this if you want to change the user's password. Must be at least 6 characters.
+              </p>
+            </div>
+
+            <div>
+              <Label>User Role</Label>
+              <Select
+                className="mt-1.5"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value)}
+              >
+                <option value="ROLE_USER">User</option>
+                <option value="ROLE_STAFF">Staff</option>
+                <option value="ROLE_ADMIN">Administrator</option>
+              </Select>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5">
+                {editRole === "ROLE_ADMIN" 
+                  ? "Administrators have full access to all areas of the system." 
+                  : editRole === "ROLE_STAFF"
+                    ? "Staff members can manage products and orders but have limited administrative access."
+                    : "Regular users have no administrative access."}
+              </p>
+            </div>
+
+            <div className="pt-4 flex justify-end space-x-4">
+              <ButtonPrimary 
+                onClick={closeEditPage} 
+                type="button"
+                className="!bg-neutral-200 !text-neutral-700 dark:!bg-neutral-700 dark:!text-neutral-300"
+              >
+                Cancel
+              </ButtonPrimary>
+              <ButtonPrimary 
+                type="submit"
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                    Updating...
+                  </div>
+                ) : "Update User"}
+              </ButtonPrimary>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
