@@ -1,6 +1,11 @@
+# ⚠️ **Important Notice**
+- This is a **front-end eCommerce template** built using **TypeScript**, **React**, and **Next.js**.
+- We've made several modifications to better align the front-end with our custom [back-end service](https://github.com/huypq02/ecommerce-java), which is developed in Java.
+- We genuinely appreciate your interest and support. Contributions and feedback are always welcome!
+
 # 🧱 Ciseco Next.js Starter
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is a [[Next.js](https://nextjs.org/)](https://nextjs.org/) project bootstrapped with [`[create-next-app](https://github.com/vercel/next.js/tree/canary/packages/create-next-app)`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ---
 
@@ -20,7 +25,7 @@ pnpm dev
 ```
 
 Open your browser and navigate to:
-👉 [http://localhost:3000](http://localhost:3000)
+👉 [http://localhost:3000/](http://localhost:3000)
 
 You can start editing the homepage by modifying the file:
 `app/page.tsx`
@@ -30,7 +35,7 @@ The page auto-updates as you edit the file.
 
 ## 📱 API Routes
 
-Next.js supports [API routes](https://nextjs.org/docs/api-routes/introduction).
+Next.js supports [[API routes](https://nextjs.org/docs/api-routes/introduction)](https://nextjs.org/docs/api-routes/introduction).
 
 This project includes a sample API endpoint:
 [http://localhost:3000/api/hello](http://localhost:3000/api/hello)
@@ -42,7 +47,7 @@ This project includes a sample API endpoint:
 
 ## 🎨 Fonts & Optimization
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) for automatic font optimization.
+This project uses [`[next/font](https://nextjs.org/docs/basic-features/font-optimization)`](https://nextjs.org/docs/basic-features/font-optimization) for automatic font optimization.
 The default font is **Inter**, a sleek Google Font optimized for web.
 
 ---
@@ -51,9 +56,9 @@ The default font is **Inter**, a sleek Google Font optimized for web.
 
 To explore more about Next.js, check out the following resources:
 
-* 📘 [Official Documentation](https://nextjs.org/docs)
-* 🎓 [Interactive Tutorial](https://nextjs.org/learn)
-* 🛠️ [Next.js GitHub Repo](https://github.com/vercel/next.js)
+* 📘 [[Official Documentation](https://nextjs.org/docs)](https://nextjs.org/docs)
+* 🎓 [[Interactive Tutorial](https://nextjs.org/learn)](https://nextjs.org/learn)
+* 🛠️ [[Next.js GitHub Repo](https://github.com/vercel/next.js)](https://github.com/vercel/next.js)
 
 ---
 
@@ -61,9 +66,9 @@ To explore more about Next.js, check out the following resources:
 
 The easiest way to deploy your Next.js app is through **Vercel** — the creators of Next.js.
 
-🔗 [Deploy to Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
+🔗 [[Deploy to Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
 
-📦 See the [Next.js Deployment Docs](https://nextjs.org/docs/deployment) for more configuration options.
+📦 See the [[Next.js Deployment Docs](https://nextjs.org/docs/deployment)](https://nextjs.org/docs/deployment) for more configuration options.
 
 ---
 
