@@ -1,7 +1,7 @@
 "use client";
 
-import React, { FC, useState } from "react";
-import LikeButton from "./LikeButton";
+import React, { FC, useCallback, useEffect, useState } from "react";
+//import LikeButton from "./LikeButton";
 import Prices from "./Prices";
 import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 import { Product, PRODUCTS } from "@/data/data";
@@ -17,37 +17,42 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
+import { ProductExtend } from "@/app/collection/page";
 
 export interface ProductCardProps {
   className?: string;
-  data?: Product;
+  data: ProductExtend;
   isLiked?: boolean;
 }
 
-const ProductCard: FC<ProductCardProps> = ({
-  className = "",
-  data = PRODUCTS[0],
-  isLiked,
-}) => {
-  const {
-    name,
-    price,
-    description,
-    sizes,
-    variants,
-    variantType,
-    status,
-    image,
-    rating,
-    id,
-    numberOfReviews,
-  } = data;
-
+const ProductCard: FC<ProductCardProps> = ({ className = "", data, isLiked }) => {
+  const {id, name, description, variants,category,tags,link, variantType,allOfSizes,numberOfReviews,rating,status } = data;
+  const [selectedProduct, setSelectedProduct] = useState<ProductExtend | null>(null);
+  const handleQuickView = (product: ProductExtend) => {
+    setSelectedProduct(product); // ✅ Lưu sản phẩm được chọn vào state
+    localStorage.setItem("selectedProduct", JSON.stringify(product)); // 🔥 Cập nhật `localStorage` ngay lập tức
+    setShowModalQuickView(true);
+  };
+    // ✅ Khi người dùng nhấn "Xem Chi Tiết"
+    const handleDetailClick = useCallback((product: ProductExtend) => {
+      setSelectedProduct(product);
+      localStorage.setItem("selectedProduct", JSON.stringify(product));
+    }, []);
   const [variantActive, setVariantActive] = useState(0);
   const [showModalQuickView, setShowModalQuickView] = useState(false);
   const router = useRouter();
+  const selectedSize = data.variants[0].size || "Unknown";
+  const selectedImage = data.variants?.[0]?.images[0] || "Unknow";
+  const sizeList = Array.from(new Set(data.variants.map((variant) => variant.size)));
 
-  const notifyAddTocart = ({ size }: { size?: string }) => {
+  // ✅ Đảm bảo cập nhật state sau render
+useEffect(() => {
+  if (selectedProduct) {
+    setShowModalQuickView(true);
+  }
+}, [selectedProduct]);
+
+  const notifyAddTocart = () => {
     toast.custom(
       (t) => (
         <Transition
@@ -65,7 +70,7 @@ const ProductCard: FC<ProductCardProps> = ({
             Added to cart!
           </p>
           <div className="border-t border-slate-200 dark:border-slate-700 my-4" />
-          {renderProductCartOnNotify({ size })}
+          {renderProductCartOnNotify({size : selectedSize})}
         </Transition>
       ),
       {
@@ -83,7 +88,7 @@ const ProductCard: FC<ProductCardProps> = ({
           <Image
             width={80}
             height={96}
-            src={image}
+            src={selectedImage}
             alt={name}
             className="absolute object-cover object-center"
           />
@@ -93,16 +98,17 @@ const ProductCard: FC<ProductCardProps> = ({
           <div>
             <div className="flex justify-between ">
               <div>
-                <h3 className="text-base font-medium ">{name}</h3>
+                <h3 className="text-base font-medium ">{name}</h3>                
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   <span>
-                    {variants ? variants[variantActive].name : `Natural`}
+                    {variants ? variants[0].color : `Natural`}
                   </span>
                   <span className="mx-2 border-l border-slate-200 dark:border-slate-700 h-4"></span>
                   <span>{size || "XL"}</span>
+
                 </p>
               </div>
-              <Prices price={price} className="mt-0.5" />
+              <Prices price={data.variants[0].price} className="mt-0.5" />
             </div>
           </div>
           <div className="flex flex-1 items-end justify-between text-sm">
@@ -117,7 +123,7 @@ const ProductCard: FC<ProductCardProps> = ({
                   router.push("/cart");
                 }}
               >
-                View cart
+                View cart Hi
               </button>
             </div>
           </div>
@@ -168,7 +174,7 @@ const ProductCard: FC<ProductCardProps> = ({
                   ? getBorderClass(variant.color)
                   : "border-transparent"
               }`}
-              title={variant.name}
+              title={variant.color}
             >
               <div
                 className={`absolute inset-0.5 rounded-full z-0 ${variant.color}`}
@@ -190,11 +196,11 @@ const ProductCard: FC<ProductCardProps> = ({
                 ? "border-black dark:border-slate-300"
                 : "border-transparent"
             }`}
-            title={variant.name}
+            title={variant.color}
           >
             <div className="absolute inset-0.5 rounded-full overflow-hidden z-0">
               <Image
-                src={variant.thumbnail || ""}
+                src={variant.images[index] || ""}
                 alt="variant"
                 fill
                 sizes="40px"
@@ -210,7 +216,7 @@ const ProductCard: FC<ProductCardProps> = ({
   const renderGroupButtons = () => {
     return (
       <div className="absolute bottom-0 group-hover:bottom-4 inset-x-1 flex justify-center opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-        <ButtonPrimary
+        {/* <ButtonPrimary
           className="shadow-lg"
           fontSize="text-xs"
           sizeClass="py-2 px-4"
@@ -218,33 +224,33 @@ const ProductCard: FC<ProductCardProps> = ({
         >
           <BagIcon className="w-3.5 h-3.5 mb-0.5" />
           <span className="ml-1">Add to bag</span>
-        </ButtonPrimary>
-        <ButtonSecondary
-          className="ml-1.5 bg-white hover:!bg-gray-100 hover:text-slate-900 transition-colors shadow-lg"
-          fontSize="text-xs"
-          sizeClass="py-2 px-4"
-          onClick={() => setShowModalQuickView(true)}
-        >
-          <ArrowsPointingOutIcon className="w-3.5 h-3.5" />
-          <span className="ml-1">Quick view</span>
-        </ButtonSecondary>
+        </ButtonPrimary> */}
+<ButtonSecondary
+  className="ml-1.5 bg-white hover:!bg-gray-100 hover:text-slate-900 transition-colors shadow-lg"
+  fontSize="text-xs"
+  sizeClass="py-2 px-4"
+  onClick={() => handleQuickView(data)}  // Truyền sản phẩm được chọn
+>
+  <ArrowsPointingOutIcon className="w-3.5 h-3.5" />
+  <span className="ml-1">Quick view</span>
+</ButtonSecondary>
       </div>
     );
   };
 
-  const renderSizeList = () => {
-    if (!sizes || !sizes.length) {
+  const renderSizeList = (sizes : string[] ) => {
+    if (!sizeList || !sizeList.length) {
       return null;
     }
 
     return (
       <div className="absolute bottom-0 inset-x-1 space-x-1.5 flex justify-center opacity-0 invisible group-hover:bottom-4 group-hover:opacity-100 group-hover:visible transition-all">
-        {sizes.map((size, index) => {
+        {sizeList.map((size, index) => {
           return (
             <div
               key={index}
               className="nc-shadow-lg w-10 h-10 rounded-xl bg-white hover:bg-slate-900 hover:text-white transition-colors cursor-pointer flex items-center justify-center uppercase font-semibold tracking-tight text-sm text-slate-900"
-              onClick={() => notifyAddTocart({ size })}
+              onClick={() => notifyAddTocart()}
             >
               {size}
             </div>
@@ -259,22 +265,41 @@ const ProductCard: FC<ProductCardProps> = ({
       <div
         className={`nc-ProductCard relative flex flex-col bg-transparent ${className}`}
       >
-        <Link href={"/product-detail"} className="absolute inset-0"></Link>
+<Link 
+  href={`/product-detail?id=${data.id}`}
+  onClick={(e) => {
+    e.preventDefault();
+    handleDetailClick(data);
+    setTimeout(() => {
+      router.push(`/product-detail?id=${data.id}`);
+    }, 100); // Chờ localStorage cập nhật xong rồi mới chuyển trang
+  }}
+  className="absolute inset-0"
+>
+</Link>
+        
 
         <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-300 rounded-3xl overflow-hidden z-1 group">
-          <Link href={"/product-detail"} className="block">
+          <Link href={"/product-detail"} className="block"             onClick={(e) => {
+    e.preventDefault();
+    handleDetailClick(data);
+    setTimeout(() => {
+      router.push(`/product-detail?id=${data.id}`);
+    }, 100); // Chờ localStorage cập nhật xong rồi mới chuyển trang
+  }}
+          >
             <NcImage
               containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0"
-              src={image}
+              src={selectedImage}
               className="object-cover w-full h-full drop-shadow-xl"
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 40vw"
               alt="product"
             />
           </Link>
-          <ProductStatus status={status} />
-          <LikeButton liked={isLiked} className="absolute top-3 right-3 z-10" />
-          {sizes ? renderSizeList() : renderGroupButtons()}
+          <ProductStatus status={data.status} />
+          {/* <LikeButton liked={isLiked} className="absolute top-3 right-3 z-10" /> */}
+          { renderGroupButtons()}
         </div>
 
         <div className="space-y-4 px-2.5 pt-5 pb-2.5">
@@ -284,12 +309,12 @@ const ProductCard: FC<ProductCardProps> = ({
               {name}
             </h2>
             <p className={`text-sm text-slate-500 dark:text-slate-400 mt-1 `}>
-              {description}
+              {description.length > 35 ? description.substring(0, 30) + "..." : description}
             </p>
           </div>
 
           <div className="flex justify-between items-end ">
-            <Prices price={price} />
+            <Prices price={data.variants[0].price} />
             <div className="flex items-center mb-0.5">
               <StarIcon className="w-5 h-5 pb-[1px] text-amber-400" />
               <span className="text-sm ml-1 text-slate-500 dark:text-slate-400">
@@ -300,11 +325,15 @@ const ProductCard: FC<ProductCardProps> = ({
         </div>
       </div>
 
-      {/* QUICKVIEW */}
-      <ModalQuickView
-        show={showModalQuickView}
-        onCloseModalQuickView={() => setShowModalQuickView(false)}
-      />
+      {/*QUICKVIEW*/}
+      {showModalQuickView && selectedProduct && (
+        <ModalQuickView
+          data={selectedProduct} // 🔥 Hiển thị sản phẩm đã lưu trong `localStorage`
+          show={showModalQuickView}
+          onCloseModalQuickView={() => setShowModalQuickView(false)}
+        />
+      )}
+      
     </>
   );
 };

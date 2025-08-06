@@ -1,440 +1,273 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import LikeButton from "@/components/LikeButton";
 import { StarIcon } from "@heroicons/react/24/solid";
 import BagIcon from "@/components/BagIcon";
 import NcInputNumber from "@/components/NcInputNumber";
-import { PRODUCTS } from "@/data/data";
-import {
-  NoSymbolIcon,
-  ClockIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
-import IconDiscount from "@/components/IconDiscount";
 import Prices from "@/components/Prices";
 import toast from "react-hot-toast";
 import SectionSliderProductCard from "@/components/SectionSliderProductCard";
-import detail1JPG from "@/images/products/detail1.jpg";
-import detail2JPG from "@/images/products/detail2.jpg";
-import detail3JPG from "@/images/products/detail3.jpg";
 import Policy from "./Policy";
 import ReviewItem from "@/components/ReviewItem";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import SectionPromo2 from "@/components/SectionPromo2";
-import ModalViewAllReviews from "./ModalViewAllReviews";
 import NotifyAddTocart from "@/components/NotifyAddTocart";
 import Image from "next/image";
 import AccordionInfo from "@/components/AccordionInfo";
+import { ProductExtend } from "../collection/page";
+import axios from "axios";
 
-const LIST_IMAGES_DEMO = [detail1JPG, detail2JPG, detail3JPG];
+export interface ProductQuickViewProps {
+  className?: string;
+}
+// Định nghĩa màu sắc tương ứng (Map màu từ text -> mã màu HEX)
+const colorMap: { [key: string]: string } = {
+  Xanh: "#008000",  // Màu xanh lá
+  Đỏ: "#FF0000",    // Màu đỏ
+  Vàng: "#FFD700",  // Màu vàng
+  Hồng: "#FFC0CB",
+  Tím: "#6A0DAD",
+  Đen: "#000000",
+  Trắng: "#FFFFFF"
 
-const ProductDetailPage = () => {
-  const { sizes, variants, status, allOfSizes, image } = PRODUCTS[0];
-  //
+};
+
+const ProductDetailPage: FC<ProductQuickViewProps> = ({ className = "" }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const productId = searchParams.get("id"); // ✅ Lấy ID từ URL
+
+
+
+  const [product, setProduct] = useState<ProductExtend | null>(null);
   const [variantActive, setVariantActive] = useState(0);
-  const [sizeSelected, setSizeSelected] = useState(sizes ? sizes[0] : "");
+  const [selectedSize, setSelectedSize] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(0);
   const [qualitySelected, setQualitySelected] = useState(1);
-  const [isOpenModalViewAllReviews, setIsOpenModalViewAllReviews] =
-    useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  //
-  const notifyAddTocart = () => {
-    toast.custom(
-      (t) => (
-        <NotifyAddTocart
-          productImage={image}
-          qualitySelected={qualitySelected}
-          show={t.visible}
-          sizeSelected={sizeSelected}
-          variantActive={variantActive}
-        />
-      ),
-      { position: "top-right", id: "nc-product-notify", duration: 3000 }
-    );
-  };
 
-  const renderVariants = () => {
-    if (!variants || !variants.length) {
-      return null;
+  useEffect(() => {
+    const savedProduct = localStorage.getItem("selectedProduct");
+
+    if (savedProduct) {
+      setProduct(JSON.parse(savedProduct));
+    } else {
+      router.push("/"); // ✅ Nếu không có sản phẩm, quay về trang danh sách
     }
+  }, [router]);
 
-    return (
-      <div>
-        <label htmlFor="">
-          <span className="text-sm font-medium">
-            Color:
-            <span className="ml-1 font-semibold">
-              {variants[variantActive].name}
-            </span>
-          </span>
-        </label>
-        <div className="flex mt-3">
-          {variants.map((variant, index) => (
-            <div
-              key={index}
-              onClick={() => setVariantActive(index)}
-              className={`relative flex-1 max-w-[75px] h-10 sm:h-11 rounded-full border-2 cursor-pointer ${
-                variantActive === index
-                  ? "border-primary-6000 dark:border-primary-500"
-                  : "border-transparent"
-              }`}
-            >
-              <div className="absolute inset-0.5 rounded-full overflow-hidden z-0">
-                <Image
-                  fill
-                  sizes="100px"
-                  src={variant.thumbnail || ""}
-                  alt=""
-                  className="absolute w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const sizeList = Array.from(new Set(product?.variants.map(item => item.size)));
+  const colorList = Array.from(new Set(product?.variants.map(item => item.color)));   
 
-  const renderSizeList = () => {
-    if (!allOfSizes || !sizes || !sizes.length) {
-      return null;
-    }
-    return (
-      <div>
-        <div className="flex justify-between font-medium text-sm">
-          <label htmlFor="">
-            <span className="">
-              Size:
-              <span className="ml-1 font-semibold">{sizeSelected}</span>
-            </span>
-          </label>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="##"
-            className="text-primary-6000 hover:text-primary-500"
-          >
-            See sizing chart
-          </a>
-        </div>
-        <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 mt-3">
-          {allOfSizes.map((size, index) => {
-            const isActive = size === sizeSelected;
-            const sizeOutStock = !sizes.includes(size);
-            return (
-              <div
-                key={index}
-                className={`relative h-10 sm:h-11 rounded-2xl border flex items-center justify-center 
-                text-sm sm:text-base uppercase font-semibold select-none overflow-hidden z-0 ${
-                  sizeOutStock
-                    ? "text-opacity-20 dark:text-opacity-20 cursor-not-allowed"
-                    : "cursor-pointer"
-                } ${
-                  isActive
-                    ? "bg-primary-6000 border-primary-6000 text-white hover:bg-primary-6000"
-                    : "border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 hover:bg-neutral-50 dark:hover:bg-neutral-700"
-                }`}
-                onClick={() => {
-                  if (sizeOutStock) {
-                    return;
-                  }
-                  setSizeSelected(size);
-                }}
-              >
-                {size}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  const selectedVariant = product?.variants.find(
+    (variant) => variant.size === sizeList[selectedSize] && colorList[selectedColor] === variant.color
+  );
 
-  const renderStatus = () => {
-    if (!status) {
-      return null;
-    }
-    const CLASSES =
-      "absolute top-3 left-3 px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 nc-shadow-lg rounded-full flex items-center justify-center text-slate-700 text-slate-900 dark:text-slate-300";
-    if (status === "New in") {
-      return (
-        <div className={CLASSES}>
-          <SparklesIcon className="w-3.5 h-3.5" />
-          <span className="ml-1 leading-none">{status}</span>
-        </div>
+  // Lấy giá (nếu không tìm thấy thì mặc định là 0)
+  const selectedPrice = selectedVariant ? selectedVariant.price : "0";
+
+  const dataDescription = product
+  ? [
+      {
+        name: "Description",
+        content: product.description || "No description available.",
+      },
+    ]
+  : [];
+
+  const notifyAddTocart = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Check if user is logged in
+      if (!token) {
+        toast.error("Please login to add items to cart");
+        return;
+      }
+      
+      // Check if product exists
+      if (!product) {
+        toast.error("Product information not available");
+        return;
+      }
+
+      // Prepare data for API call
+      const cartItem = {
+        productDetailID: product.id, // Use the selected variant ID or product ID
+        quantity: qualitySelected,
+      };
+      
+      // Make API call to add item to cart
+      // Import axios at the top of the file if not already imported
+      const response = await axios.post('http://localhost:8080/cart/add', cartItem, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Check if request was successful (axios throws error on non-2xx responses)
+      // So we need to check response.data or any specific property your API returns
+      if (!response.data) {
+        throw new Error('Failed to add item to cart');
+      }
+      
+      // Show success notification
+      toast.custom(
+        (t) => (
+          <NotifyAddTocart
+            productImage={product?.variants[0].images[0] || ""}
+            qualitySelected={qualitySelected}
+            show={t.visible}
+            sizeSelected={sizeList[selectedSize]}
+            colorSelected={colorList[selectedColor]}
+          />
+        ),
+        { position: "top-right", id: "nc-product-notify", duration: 3000 }
       );
+      
+      // Optional: You can also refresh the cart count or update cart state here
+      
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      toast.error("Failed to add item to cart");
     }
-    if (status === "50% Discount") {
-      return (
-        <div className={CLASSES}>
-          <IconDiscount className="w-3.5 h-3.5" />
-          <span className="ml-1 leading-none">{status}</span>
-        </div>
-      );
-    }
-    if (status === "Sold Out") {
-      return (
-        <div className={CLASSES}>
-          <NoSymbolIcon className="w-3.5 h-3.5" />
-          <span className="ml-1 leading-none">{status}</span>
-        </div>
-      );
-    }
-    if (status === "limited edition") {
-      return (
-        <div className={CLASSES}>
-          <ClockIcon className="w-3.5 h-3.5" />
-          <span className="ml-1 leading-none">{status}</span>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const renderSectionContent = () => {
-    return (
-      <div className="space-y-7 2xl:space-y-8">
-        {/* ---------- 1 HEADING ----------  */}
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-semibold">
-            Heavy Weight Shoes
-          </h2>
-
-          <div className="flex items-center mt-5 space-x-4 sm:space-x-5">
-            {/* <div className="flex text-xl font-semibold">$112.00</div> */}
-            <Prices
-              contentClass="py-1 px-2 md:py-1.5 md:px-3 text-lg font-semibold"
-              price={112}
-            />
-
-            <div className="h-7 border-l border-slate-300 dark:border-slate-700"></div>
-
-            <div className="flex items-center">
-              <a
-                href="#reviews"
-                className="flex items-center text-sm font-medium"
-              >
-                <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
-                <div className="ml-1.5 flex">
-                  <span>4.9</span>
-                  <span className="block mx-2">·</span>
-                  <span className="text-slate-600 dark:text-slate-400 underline">
-                    142 reviews
-                  </span>
-                </div>
-              </a>
-              <span className="hidden sm:block mx-2.5">·</span>
-              <div className="hidden sm:flex items-center text-sm">
-                <SparklesIcon className="w-3.5 h-3.5" />
-                <span className="ml-1 leading-none">{status}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ---------- 3 VARIANTS AND SIZE LIST ----------  */}
-        <div className="">{renderVariants()}</div>
-        <div className="">{renderSizeList()}</div>
-
-        {/*  ---------- 4  QTY AND ADD TO CART BUTTON */}
-        <div className="flex space-x-3.5">
-          <div className="flex items-center justify-center bg-slate-100/70 dark:bg-slate-800/70 px-2 py-3 sm:p-3.5 rounded-full">
-            <NcInputNumber
-              defaultValue={qualitySelected}
-              onChange={setQualitySelected}
-            />
-          </div>
-          <ButtonPrimary
-            className="flex-1 flex-shrink-0"
-            onClick={notifyAddTocart}
-          >
-            <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
-            <span className="ml-3">Add to cart</span>
-          </ButtonPrimary>
-        </div>
-
-        {/*  */}
-        <hr className=" 2xl:!my-10 border-slate-200 dark:border-slate-700"></hr>
-        {/*  */}
-
-        {/* ---------- 5 ----------  */}
-        <AccordionInfo />
-
-        {/* ---------- 6 ----------  */}
-        <div className="hidden xl:block">
-          <Policy />
-        </div>
-      </div>
-    );
-  };
-
-  const renderDetailSection = () => {
-    return (
-      <div className="">
-        <h2 className="text-2xl font-semibold">Product Details</h2>
-        <div className="prose prose-sm sm:prose dark:prose-invert sm:max-w-4xl mt-7">
-          <p>
-            The patented eighteen-inch hardwood Arrowhead deck --- finely
-            mortised in, makes this the strongest and most rigid canoe ever
-            built. You cannot buy a canoe that will afford greater satisfaction.
-          </p>
-          <p>
-            The St. Louis Meramec Canoe Company was founded by Alfred Wickett in
-            1922. Wickett had previously worked for the Old Town Canoe Co from
-            1900 to 1914. Manufacturing of the classic wooden canoes in Valley
-            Park, Missouri ceased in 1978.
-          </p>
-          <ul>
-            <li>Regular fit, mid-weight t-shirt</li>
-            <li>Natural color, 100% premium combed organic cotton</li>
-            <li>
-              Quality cotton grown without the use of herbicides or pesticides -
-              GOTS certified
-            </li>
-            <li>Soft touch water based printed in the USA</li>
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  const renderReviews = () => {
-    return (
-      <div className="">
-        {/* HEADING */}
-        <h2 className="text-2xl font-semibold flex items-center">
-          <StarIcon className="w-7 h-7 mb-0.5" />
-          <span className="ml-1.5"> 4,87 · 142 Reviews</span>
-        </h2>
-
-        {/* comment */}
-        <div className="mt-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-11 gap-x-28">
-            <ReviewItem />
-            <ReviewItem
-              data={{
-                comment: `I love the charcoal heavyweight hoodie. Still looks new after plenty of washes. 
-                  If you’re unsure which hoodie to pick.`,
-                date: "December 22, 2021",
-                name: "Stiven Hokinhs",
-                starPoint: 5,
-              }}
-            />
-            <ReviewItem
-              data={{
-                comment: `The quality and sizing mentioned were accurate and really happy with the purchase. Such a cozy and comfortable hoodie. 
-                Now that it’s colder, my husband wears his all the time. I wear hoodies all the time. `,
-                date: "August 15, 2022",
-                name: "Gropishta keo",
-                starPoint: 5,
-              }}
-            />
-            <ReviewItem
-              data={{
-                comment: `Before buying this, I didn't really know how I would tell a "high quality" sweatshirt, but after opening, I was very impressed. 
-                The material is super soft and comfortable and the sweatshirt also has a good weight to it.`,
-                date: "December 12, 2022",
-                name: "Dahon Stiven",
-                starPoint: 5,
-              }}
-            />
-          </div>
-
-          <ButtonSecondary
-            onClick={() => setIsOpenModalViewAllReviews(true)}
-            className="mt-10 border border-slate-300 dark:border-slate-700 "
-          >
-            Show me all 142 reviews
-          </ButtonSecondary>
-        </div>
-      </div>
-    );
   };
 
   return (
-    <div className={`nc-ProductDetailPage `}>
-      {/* MAIn */}
+    <div className={`nc-ProductDetailPage ${className}`}>
       <main className="container mt-5 lg:mt-11">
         <div className="lg:flex">
-          {/* CONTENT */}
-          <div className="w-full lg:w-[55%] ">
-            {/* HEADING */}
+          {/* IMAGE SECTION */}
+          <div className="w-full lg:w-[55%]">
             <div className="relative">
-              <div className="aspect-w-16 aspect-h-16 relative">
-                <Image
-                  fill
-                  sizes="(max-width: 640px) 100vw, 33vw"
-                  src={LIST_IMAGES_DEMO[0]}
-                  className="w-full rounded-2xl object-cover"
-                  alt="product detail 1"
-                />
-              </div>
-              {renderStatus()}
-              {/* META FAVORITES */}
-              <LikeButton className="absolute right-3 top-3 " />
-            </div>
-            <div className="grid grid-cols-2 gap-3 mt-3 sm:gap-6 sm:mt-6 xl:gap-8 xl:mt-8">
-              {[LIST_IMAGES_DEMO[1], LIST_IMAGES_DEMO[2]].map((item, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="aspect-w-11 xl:aspect-w-10 2xl:aspect-w-11 aspect-h-16 relative"
-                  >
-                    <Image
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                      fill
-                      src={item}
-                      className="w-full rounded-2xl object-cover"
-                      alt="product detail 1"
-                    />
-                  </div>
-                );
-              })}
+              <Image
+                src={product?.variants[0].images[selectedImage] || ""}
+                width={500}
+                height={500}
+                className="w-full rounded-2xl object-cover"
+                alt="product detail"
+              />
+              {/* <LikeButton className="absolute right-3 top-3 " /> */}
             </div>
           </div>
 
-          {/* SIDEBAR */}
+          {/* PRODUCT DETAILS */}
           <div className="w-full lg:w-[45%] pt-10 lg:pt-0 lg:pl-7 xl:pl-9 2xl:pl-10">
-            {renderSectionContent()}
-          </div>
-        </div>
+            <h2 className="text-2xl sm:text-3xl font-semibold">{product?.name}</h2>
+            <p className="text-sm text-gray-500 mt-2"></p>
 
-        {/* DETAIL AND REVIEW */}
-        <div className="mt-12 sm:mt-16 space-y-10 sm:space-y-16">
-          <div className="block xl:hidden">
+            <div className="flex items-center mt-5 space-x-4 sm:space-x-5">
+              <Prices price={selectedPrice || "0"} />
+              <span className="ml-1.5">{99} Reviews</span>
+            </div>
+
+            {/* SIZE AND COLOR SELECTION */}
+            <div className="mt-4">
+              <label className="text-sm font-medium">Color: {colorList[selectedColor]}</label>
+              <div className="flex space-x-2 mt-2">
+                {colorList.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedColor(index)}
+                    className={`w-12 h-8 border-2 rounded-lg transition-all duration-200 flex items-center justify-center
+                    ${selectedColor === index ? "border-black scale-110 shadow-md" : "border-gray-300"}
+                  `}
+                    style={{
+                      backgroundColor: colorMap[item] || "#ddd", // Màu nền từ colorMap, nếu không có thì mặc định
+                      color: selectedColor === index ? "white" : "black",
+                    }}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="text-sm font-medium">Size: {sizeList[selectedSize]}</label>
+              <div className="flex space-x-2 mt-2">
+                {sizeList.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedSize(index)}
+                    className={`w-12 h-8 border-2 rounded-lg transition-all duration-200 flex items-center justify-center
+                    ${selectedSize === index ? "border-black scale-110 shadow-md" : "border-gray-300"}
+                  `}
+                    style={{
+                      backgroundColor: colorMap[item] || "#ddd", // Màu nền từ colorMap, nếu không có thì mặc định
+                      color: selectedSize === index ? "white" : "black",
+                    }}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ADD TO CART */}
+            <div className="flex items-center justify-between space-x-3.5 mt-6">
+              <div className="flex-1 flex justify-center">
+                {selectedPrice !== "0" ? (
+                  <NcInputNumber
+                    defaultValue={qualitySelected}
+                    onChange={setQualitySelected}
+                    className="w-full min-w-[100px]"
+                  />
+                ) : (
+                  <span className="text-red-500 font-semibold w-full min-w-[100px] text-center">
+                    Hết hàng
+                  </span>
+                )}
+              </div>
+
+              <ButtonPrimary className="flex-1 flex-shrink-0" onClick={notifyAddTocart}>
+                <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
+                <span className="ml-3">Add to cart</span>
+              </ButtonPrimary>
+            </div>
+
+            <hr className="mt-6 border-slate-200 dark:border-slate-700" />
+
+            {/* POLICY & DETAILS */}
+            <AccordionInfo   data={dataDescription} />
+            <br></br>
             <Policy />
           </div>
+        </div>
 
-          {renderDetailSection()}
+        {/* REVIEWS */}
+        <div className="mt-12 sm:mt-16 space-y-10 sm:space-y-16">
+          <h2 className="text-2xl font-semibold flex items-center">
+            <StarIcon className="w-7 h-7 mb-0.5" />
+            <span className="ml-1.5"> {product?.rating} · {99} Reviews</span>
+          </h2>
 
-          <hr className="border-slate-200 dark:border-slate-700" />
-
-          {renderReviews()}
-
-          <hr className="border-slate-200 dark:border-slate-700" />
-
-          {/* OTHER SECTION */}
-          <SectionSliderProductCard
-            heading="Customers also purchased"
-            subHeading=""
-            headingFontClassName="text-2xl font-semibold"
-            headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
-          />
-
-          {/* SECTION */}
-          <div className="pb-20 xl:pb-28 lg:pt-14">
-            <SectionPromo2 />
+          <div className="mt-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-11 gap-x-28">
+              <ReviewItem />
+              <ReviewItem
+                data={{
+                  comment: `The quality and sizing mentioned were accurate and really happy with the purchase.`,
+                  date: "August 15, 2022",
+                  name: "Gropishta keo",
+                  starPoint: 5,
+                }}
+              />
+            </div>
           </div>
         </div>
-      </main>
 
-      {/* MODAL VIEW ALL REVIEW */}
-      <ModalViewAllReviews
-        show={isOpenModalViewAllReviews}
-        onCloseModalViewAllReviews={() => setIsOpenModalViewAllReviews(false)}
-      />
+        {/* OTHER PRODUCTS */}
+        {/* <SectionSliderProductCard heading="Customers also purchased" subHeading="" /> */}
+        <div className="pb-20 xl:pb-28 lg:pt-14">
+          <SectionPromo2 />
+        </div>
+      </main>
     </div>
   );
 };

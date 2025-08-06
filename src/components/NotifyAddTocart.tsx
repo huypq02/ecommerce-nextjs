@@ -3,22 +3,24 @@ import { Transition } from "@/app/headlessui";
 import Prices from "@/components/Prices";
 import { PRODUCTS } from "@/data/data";
 import Image, { StaticImageData } from "next/image";
+import { useRouter } from "next/navigation";
 
 interface Props {
   show: boolean;
   productImage: string | StaticImageData;
-  variantActive: number;
   sizeSelected: string;
   qualitySelected: number;
+  colorSelected:string
 }
 
 const NotifyAddTocart: FC<Props> = ({
   show,
   productImage,
-  variantActive,
   qualitySelected,
   sizeSelected,
+  colorSelected
 }) => {
+  const router = useRouter();
   const { name, price, variants } = PRODUCTS[0];
 
   const renderProductCartOnNotify = () => {
@@ -41,7 +43,7 @@ const NotifyAddTocart: FC<Props> = ({
                 <h3 className="text-base font-medium ">{name}</h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   <span>
-                    {variants ? variants[variantActive].name : `Natural`}
+                    {colorSelected ? colorSelected  : `Natural`}
                   </span>
                   <span className="mx-2 border-l border-slate-200 dark:border-slate-700 h-4"></span>
                   <span>{sizeSelected || "XL"}</span>
@@ -57,6 +59,10 @@ const NotifyAddTocart: FC<Props> = ({
               <button
                 type="button"
                 className="font-medium text-primary-6000 dark:text-primary-500 "
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push("/cart");
+                }}
               >
                 View cart
               </button>

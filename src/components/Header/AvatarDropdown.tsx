@@ -2,12 +2,58 @@
 
 import { Popover, Transition } from "@/app/headlessui";
 import { avatarImgs } from "@/contains/fakeData";
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Avatar from "@/shared/Avatar/Avatar";
 import SwitchDarkMode2 from "@/shared/SwitchDarkMode/SwitchDarkMode2";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { UPLOAD_URL } from "@/data/navigation";
 
 export default function AvatarDropdown() {
+  const router = useRouter();
+  const [userName, setUserName] = useState("User");
+  const [userLocation, setUserLocation] = useState("");
+  const [image, setImage] = useState("");
+
+  useEffect(() => {
+    // Get user info from localStorage if available
+    const userInfo = localStorage.getItem("userInfo");
+    if (userInfo) {
+      try {
+        const parsedInfo = JSON.parse(userInfo);
+        if (parsedInfo.fullName) {
+          setUserName(parsedInfo.fullName);
+        }
+        if (parsedInfo.address) {
+          setUserLocation(parsedInfo.address);
+        }
+        if (parsedInfo.image) {
+          setImage(UPLOAD_URL + "/" + parsedInfo.image);
+        }
+      } catch (error) {
+        console.error("Error parsing user info:", error);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    // Clear token from localStorage
+    localStorage.removeItem("token");
+    
+    // Also clear any other user-related data
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("orderData");
+    
+    // Optional: Add some visual feedback like console log
+    console.log("User logged out successfully");
+    
+    // Redirect to homepage or login page
+    router.push("/");
+    
+    // Force page refresh to ensure all components update
+    window.location.reload();
+  };
+
   return (
     <div className="AvatarDropdown ">
       <Popover className="relative">
@@ -51,11 +97,11 @@ export default function AvatarDropdown() {
                 <div className="overflow-hidden rounded-3xl shadow-lg ring-1 ring-black ring-opacity-5">
                   <div className="relative grid grid-cols-1 gap-6 bg-white dark:bg-neutral-800 py-7 px-6">
                     <div className="flex items-center space-x-3">
-                      <Avatar imgUrl={avatarImgs[7]} sizeClass="w-12 h-12" />
+                      <Avatar imgUrl={image} sizeClass="w-12 h-12" />
 
                       <div className="flex-grow">
-                        <h4 className="font-semibold">Eden Smith</h4>
-                        <p className="text-xs mt-0.5">Los Angeles, CA</p>
+                        <h4 className="font-semibold">{userName}</h4>
+                        <p className="text-xs mt-0.5">{userLocation}</p>
                       </div>
                     </div>
 
@@ -148,7 +194,7 @@ export default function AvatarDropdown() {
                       </div>
                     </Link>
 
-                    {/* ------------------ 2 --------------------- */}
+                    {/* ------------------ 3 --------------------- */}
                     <Link
                       href={"/account-savelists"}
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
@@ -177,7 +223,7 @@ export default function AvatarDropdown() {
 
                     <div className="w-full border-b border-neutral-200 dark:border-neutral-700" />
 
-                    {/* ------------------ 2 --------------------- */}
+                    {/* ------------------ 4 --------------------- */}
                     <div className="flex items-center justify-between p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50">
                       <div className="flex items-center">
                         <div className="flex items-center justify-center flex-shrink-0 text-neutral-500 dark:text-neutral-300">
@@ -218,7 +264,7 @@ export default function AvatarDropdown() {
                       <SwitchDarkMode2 />
                     </div>
 
-                    {/* ------------------ 2 --------------------- */}
+                    {/* ------------------ 5 --------------------- */}
                     <Link
                       href={"/"}
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
@@ -281,11 +327,13 @@ export default function AvatarDropdown() {
                       </div>
                     </Link>
 
-                    {/* ------------------ 2 --------------------- */}
-                    <Link
-                      href={"/#"}
+                    {/* ------------------ 6 --------------------- */}
+                    <button
                       className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
-                      onClick={() => close()}
+                      onClick={() => {
+                        handleLogout();
+                        close();
+                      }}
                     >
                       <div className="flex items-center justify-center flex-shrink-0 text-neutral-500 dark:text-neutral-300">
                         <svg
@@ -321,7 +369,7 @@ export default function AvatarDropdown() {
                       <div className="ml-4">
                         <p className="text-sm font-medium ">{"Log out"}</p>
                       </div>
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </Popover.Panel>

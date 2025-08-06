@@ -93,6 +93,9 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/account", name: "Accout Page" },
       { id: ncNanoId(), href: "/account-order", name: "Order Page" },
       { id: ncNanoId(), href: "/subscription", name: "Subscription" },
+      { id: ncNanoId(), href: "/user/auth/social/callback", name: "OAuth Callback" },
+      { id: ncNanoId(), href: "/payment/success", name: "Payment Success" },
+      { id: ncNanoId(), href: "/payment/error", name: "Payment Error" },
     ],
   },
   {
@@ -108,9 +111,40 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/signup", name: "Signup" },
     ],
   },
+  {
+    id: ncNanoId(),
+    href: "/#",
+    name: "Admin Page",
+    children: [
+      { id: ncNanoId(), href: "/admin/product", name: "Admin Product Page" },
+    ],
+  },
 ];
 
 const OTHER_PAGE_CHILD: NavItemType[] = [
+  {
+    id: ncNanoId(),
+    href: "/admin/product",
+    name: "Admin Page",
+    type: "dropdown",
+    children: [
+      {
+        id: ncNanoId(),
+        href: "/admin/product",
+        name: "Admin Product Page",
+      },
+      {
+        id: ncNanoId(),
+        href: "/admin/user",
+        name: "Admin User Page",
+      },
+      {
+        id: ncNanoId(),
+        href: "/admin/order",
+        name: "Admin Order Page",
+      },
+    ]
+  },
   {
     id: ncNanoId(),
     href: "/",
@@ -267,3 +301,12 @@ export const NAVIGATION_DEMO_2: NavItemType[] = [
     children: OTHER_PAGE_CHILD,
   },
 ];
+
+export const BACKEND_BASE_URL = "http://localhost:8080";
+export const OAUTH2_URL_GOOGLE = BACKEND_BASE_URL + "/user/auth/social";
+export const OAUTH2_URL_GOOGLE_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
+export const OAUTH2_URL_FACEBOOK = BACKEND_BASE_URL + "/user/auth/social";
+export const OAUTH2_URL_FACEBOOK_CALLBACK = BACKEND_BASE_URL + "/user/auth/social/callback";
+export const PAYMENT_SUCCESS_URL = BACKEND_BASE_URL + "/order";
+export const ACCOUNT_URL = BACKEND_BASE_URL + "/account";
+export const UPLOAD_URL = BACKEND_BASE_URL + "/download";

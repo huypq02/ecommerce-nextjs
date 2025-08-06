@@ -3,7 +3,6 @@
 import Label from "@/components/Label/Label";
 import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
-import { Product, PRODUCTS } from "@/data/data";
 import { useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Input from "@/shared/Input/Input";
@@ -12,11 +11,207 @@ import PaymentMethod from "./PaymentMethod";
 import ShippingAddress from "./ShippingAddress";
 import Image from "next/image";
 import Link from "next/link";
+import axios from 'axios'
+import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+
+export interface ContactFormData {
+  email: string;
+  phone: string;
+}
+
+export interface ShippingAddressData {
+  addressType: string;
+  lastName: string | number | readonly string[] | undefined;
+  firstName: string | number | readonly string[] | undefined;
+  aptSuite: string | number | readonly string[] | undefined;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface PaymentMethodData {
+  cardNumber: string;
+  cardHolder: string;
+  expiryDate: string;
+  cvv: string;
+  paymentType: string;
+}
+
+export interface CheckoutData {
+  contact: ContactFormData;
+  shipping: ShippingAddressData;
+  payment: PaymentMethodData;
+}
+
+interface Order {
+  productDetailId: number;
+  productName: string;
+  presentUnitPrice: number;
+  imageUrls: string[];
+  description: string;
+  category: string;
+  tags: string[];
+  link: "/product-detail/";
+  variantType?: "color" | "image";
+  sizes?: string[];
+  allOfSizes?: string[];
+  status?: "New in" | "limited edition" | "Sold Out" | "50% Discount";
+  rating?: string;
+  numberOfReviews?: number;
+  color: string;
+  quantity: number;
+}
 
 const CheckoutPage = () => {
+  const router = useRouter(); // Initialize the router hook
+
   const [tabActive, setTabActive] = useState<
-    "ContactInfo" | "ShippingAddress" | "PaymentMethod"
+    "ContactInfo" | "ShippingAddress" | "PaymentMethod" | ""
   >("ShippingAddress");
+  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
+    contact: {
+      email: '',
+      phone: ''
+    },
+    shipping: {
+      addressType: '',
+      lastName: '',
+      firstName: '',
+      aptSuite: '',
+      address: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: ''
+    },
+    payment: {
+      cardNumber: '',
+      cardHolder: '',
+      expiryDate: '',
+      cvv: '',
+      paymentType: ''
+    }
+  });
+
+  const handleContactInfoSubmit = (contactData: ContactFormData) => {
+    // Check if all required fields are filled
+    if (!contactData.email || !contactData.phone) {
+      alert('Please fill in all contact information fields');
+      return;
+    }
+
+    setCheckoutData(prev => ({
+      ...prev,
+      contact: contactData
+    }));
+    setTabActive('ShippingAddress');
+  };
+
+  const handleShippingSubmit = (shippingData: ShippingAddressData) => {
+      // Check if all required fields are filled
+    if (!shippingData.address || 
+        !shippingData.city || 
+        !shippingData.postalCode || 
+        !shippingData.firstName || 
+        !shippingData.lastName) {
+      alert('Please fill in all shipping address fields');
+      return;
+    }
+
+    setCheckoutData(prev => ({
+      ...prev,
+      shipping: shippingData
+    }));
+    setTabActive('PaymentMethod');
+  };
+
+  const handlePaymentSubmit = (paymentData: PaymentMethodData) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      payment: paymentData
+    }));
+    setTabActive("");
+  };
+
+  const handleCheckoutSubmit = async () => {
+    try {
+      const submitOrder = {
+        orderDetail: orderData.orderDetail.map((item) => {
+          return {
+            productDetailId: item.productDetailId,
+            quantity: item.quantity,
+            presentUnitPrice: item.presentUnitPrice,
+            color: item.color,
+            sizes: item.sizes
+          };
+        }),
+        orderStatusHistory: [
+          {
+            status: "Completed",
+            date: new Date().toISOString()
+          }
+        ],
+        fullName: checkoutData.shipping.firstName + ' ' + checkoutData.shipping.lastName,
+        phone: checkoutData.contact.phone,
+        address: checkoutData.shipping.address,
+        postalCode: checkoutData.shipping.postalCode,
+        city: checkoutData.shipping.city,
+        country: checkoutData.shipping.country,
+        province: checkoutData.shipping.state,
+        apt: checkoutData.shipping.aptSuite,
+        date: new Date().toISOString(),
+        paymentMethod: checkoutData.payment.paymentType,
+        status: "Completed",
+        shippingFee: orderData.shippingFee,
+        tax: orderData.tax,
+        discount: orderData.discount,
+        total: orderData.total
+      };
+
+      if (submitOrder.paymentMethod === 'Credit-Card') {
+        localStorage.setItem('submitOrder', JSON.stringify(submitOrder));
+        // Fetch real-time exchange rate and convert VND to USD
+        try {
+          // Fetch the latest exchange rate
+          const exchangeRateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+          const vndToUsdRate = 1 / exchangeRateRes.data.rates.VND;
+          const totalUSD = Math.round((submitOrder.total * vndToUsdRate) * 100) / 100;
+          window.location.href = `/checkout/stripe?amount=${totalUSD}`;
+        } catch (error) {
+          console.error('Error fetching exchange rate:', error);
+          // Fallback to approximate rate if API fails
+          const fallbackRate = 1 / 23000;
+          const totalUSD = Math.round((submitOrder.total * fallbackRate) * 100) / 100;
+          window.location.href = `/checkout/stripe?amount=${totalUSD}`;
+        }
+        return;
+      }
+
+       // Send orderData to your API
+       const response = await axios.post('http://localhost:8080/order', submitOrder, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+       });
+
+       if (response.status !== 200) {
+         throw new Error('Order failed');
+       }
+ 
+      // Handle successful checkout
+      // Clear orderData from localStorage after successful order
+      localStorage.removeItem('orderData');
+      router.push('/payment/success');    
+     } catch (error) {
+       console.error('Checkout error:', error);
+       // Handle error (show toast, error message, etc.)
+       router.push('/payment/error');
+     }
+  };
 
   const handleScrollToEl = (id: string) => {
     const element = document.getElementById(id);
@@ -25,16 +220,121 @@ const CheckoutPage = () => {
     }, 80);
   };
 
-  const renderProduct = (item: Product, index: number) => {
-    const { image, price, name } = item;
+  //Order informations
+  let userInfo = {
+    fullName: "fullName",
+    phone: "phone",
+    address: "address",
+    postalCode: "postalCode",
+    city: "city",
+    country: "country",
+    province: "provice",
+    apt: "apt"
+  };
+  let [orderDetail, setOrderDetail] = useState<Order[]>([]);
+  let [orderData, setOrderData] = useState({
+    orderDetail: orderDetail,
+    orderStatusHistory: null,
+    userInfo: userInfo,
+    date: "21-02-2025",
+    paymentMethod: "Card",
+    status: "new",
+    shippingFee: 9000,
+    tax: 0,
+    discount: 0,
+    total: 0
+  });
 
+  useEffect(() => {
+    const storedOrderData = localStorage.getItem("orderData");
+    if (storedOrderData) {
+      setOrderData(JSON.parse(storedOrderData));
+    }
+  }, []);
+
+  const handleQuantityChange = (index: number, newQuantity: number) => {
+    // Update the quantity in orderDetail
+    const updatedOrderDetail = [...orderData.orderDetail];
+    updatedOrderDetail[index].quantity = newQuantity;
+  
+    // Calculate new subtotal
+    const newSubTotal = updatedOrderDetail.reduce(
+      (acc, item) => acc + item.presentUnitPrice * item.quantity, 
+      0
+    );
+    
+    // Calculate new tax and total
+    const newTax = newSubTotal * 0.1;
+    const newTotal = newSubTotal + ship + newTax;
+  
+    // Update orderData with new values
+    const updatedOrderData = {
+      ...orderData,
+      orderDetail: updatedOrderDetail,
+      tax: newTax,
+      total: newTotal
+    };
+  
+    // Update state and localStorage
+    setOrderData(updatedOrderData);
+    localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
+  };
+
+  // Add this function to handle item removal
+  const handleRemoveItem = async (productDetailId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      // Call API to remove item from cart
+      const response = await axios.delete(`http://localhost:8080/cart/${productDetailId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 200) {
+        // Update the local state by filtering out the removed item
+        const updatedOrderDetail = orderData.orderDetail.filter(
+          item => item.productDetailId !== productDetailId
+        );
+        
+        // Recalculate subtotal, tax, and total
+        const newSubTotal = updatedOrderDetail.reduce(
+          (acc, item) => acc + item.presentUnitPrice * item.quantity, 
+          0
+        );
+        const newTax = newSubTotal * 0.1;
+        const newTotal = newSubTotal + ship + newTax;
+        
+        // Update orderData with new values
+        const updatedOrderData = {
+          ...orderData,
+          orderDetail: updatedOrderDetail,
+          tax: newTax,
+          total: newTotal
+        };
+        
+        // Update state and localStorage
+        setOrderData(updatedOrderData);
+        localStorage.setItem('orderData', JSON.stringify(updatedOrderData));
+        
+        console.log("Item removed successfully");
+      } else {
+        console.error("Failed to remove item from cart");
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
+  };
+
+  const renderProduct = (item: Order, index: number) => {
     return (
       <div key={index} className="relative flex py-7 first:pt-0 last:pb-0">
         <div className="relative h-36 w-24 sm:w-28 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
           <Image
-            src={image}
+            src={item.imageUrls[0]}
             fill
-            alt={name}
+            alt={item.productName}
             className="h-full w-full object-contain object-center"
             sizes="150px"
           />
@@ -46,7 +346,7 @@ const CheckoutPage = () => {
             <div className="flex justify-between ">
               <div className="flex-[1.5] ">
                 <h3 className="text-base font-semibold">
-                  <Link href="/product-detail">{name}</Link>
+                  <Link href="/product-detail">{item.productName}</Link>
                 </h3>
                 <div className="mt-1.5 sm:mt-2.5 flex text-sm text-slate-600 dark:text-slate-300">
                   <div className="flex items-center space-x-1.5">
@@ -92,7 +392,7 @@ const CheckoutPage = () => {
                       />
                     </svg>
 
-                    <span>{`Black`}</span>
+                    <span>{item.color}</span>
                   </div>
                   <span className="mx-4 border-l border-slate-200 dark:border-slate-700 "></span>
                   <div className="flex items-center space-x-1.5">
@@ -127,7 +427,7 @@ const CheckoutPage = () => {
                       />
                     </svg>
 
-                    <span>{`2XL`}</span>
+                    <span>{item.sizes}</span>
                   </div>
                 </div>
 
@@ -147,24 +447,32 @@ const CheckoutPage = () => {
                   </select>
                   <Prices
                     contentClass="py-1 px-2 md:py-1.5 md:px-2.5 text-sm font-medium h-full"
-                    price={price}
+                    price={item.presentUnitPrice}
                   />
                 </div>
               </div>
 
               <div className="hidden flex-1 sm:flex justify-end">
-                <Prices price={price} className="mt-0.5" />
+                <Prices price={item.presentUnitPrice} className="mt-0.5" />
               </div>
             </div>
           </div>
 
           <div className="flex mt-auto pt-4 items-end justify-between text-sm">
             <div className="hidden sm:block text-center relative">
-              <NcInputNumber className="relative z-10" />
+              <NcInputNumber
+                defaultValue={item.quantity}
+                onChange={(value) => handleQuantityChange(index, value)}
+                className="relative z-10" 
+              />
             </div>
 
             <a
               href="##"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveItem(item.productDetailId);
+              }}
               className="relative z-10 flex items-center mt-3 font-medium text-primary-6000 hover:text-primary-500 text-sm "
             >
               <span>Remove</span>
@@ -181,6 +489,8 @@ const CheckoutPage = () => {
         <div id="ContactInfo" className="scroll-mt-24">
           <ContactInfo
             isActive={tabActive === "ContactInfo"}
+            onSubmit={handleContactInfoSubmit}
+            initialData={checkoutData.contact}
             onOpenActive={() => {
               setTabActive("ContactInfo");
               handleScrollToEl("ContactInfo");
@@ -191,10 +501,12 @@ const CheckoutPage = () => {
             }}
           />
         </div>
-
+  
         <div id="ShippingAddress" className="scroll-mt-24">
           <ShippingAddress
             isActive={tabActive === "ShippingAddress"}
+            onSubmit={handleShippingSubmit}
+            initialData={checkoutData.shipping}
             onOpenActive={() => {
               setTabActive("ShippingAddress");
               handleScrollToEl("ShippingAddress");
@@ -205,10 +517,12 @@ const CheckoutPage = () => {
             }}
           />
         </div>
-
+  
         <div id="PaymentMethod" className="scroll-mt-24">
           <PaymentMethod
             isActive={tabActive === "PaymentMethod"}
+            onSubmit={handlePaymentSubmit}
+            initialData={checkoutData.payment}
             onOpenActive={() => {
               setTabActive("PaymentMethod");
               handleScrollToEl("PaymentMethod");
@@ -220,6 +534,12 @@ const CheckoutPage = () => {
     );
   };
 
+  // Calculate subtotal, tax, and total
+  const subTotal = orderData.orderDetail.reduce((acc, item) => acc + item.presentUnitPrice * item.quantity, 0);
+  const ship = 9000;
+  const tax = subTotal * 0.1;
+  const total = subTotal + ship + tax;
+  
   return (
     <div className="nc-CheckoutPage">
       <main className="container py-16 lg:pb-28 lg:pt-20 ">
@@ -239,16 +559,16 @@ const CheckoutPage = () => {
             <span className="underline">Checkout</span>
           </div>
         </div>
-
+  
         <div className="flex flex-col lg:flex-row">
           <div className="flex-1">{renderLeft()}</div>
-
+  
           <div className="flex-shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700 my-10 lg:my-0 lg:mx-10 xl:lg:mx-14 2xl:mx-16 "></div>
-
+  
           <div className="w-full lg:w-[36%] ">
             <h3 className="text-lg font-semibold">Order summary</h3>
             <div className="mt-8 divide-y divide-slate-200/70 dark:divide-slate-700 ">
-              {[PRODUCTS[0], PRODUCTS[2], PRODUCTS[3]].map(renderProduct)}
+              {orderData.orderDetail.map((product, index) => renderProduct(product, index))}
             </div>
 
             <div className="mt-10 pt-6 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-700 ">
@@ -265,27 +585,35 @@ const CheckoutPage = () => {
               <div className="mt-4 flex justify-between py-2.5">
                 <span>Subtotal</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $249.00
+                  {`${subTotal}`} VND
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Shipping estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $5.00
+                  {`${ship}`} VND
                 </span>
               </div>
               <div className="flex justify-between py-2.5">
                 <span>Tax estimate</span>
                 <span className="font-semibold text-slate-900 dark:text-slate-200">
-                  $24.90
+                  {`${tax}`} VND
                 </span>
               </div>
               <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                 <span>Order total</span>
-                <span>$276.00</span>
+                <span>{`${total}`} VND</span>
               </div>
             </div>
-            <ButtonPrimary className="mt-8 w-full">Confirm order</ButtonPrimary>
+            {checkoutData.payment.paymentType === 'card' ? (
+              <ButtonPrimary href={`/checkout/stripe?amount=${total}`} className="mt-8 w-full">
+                Confirm order
+              </ButtonPrimary>
+            ) : (
+              <ButtonPrimary onClick={handleCheckoutSubmit} className="mt-8 w-full">
+                Confirm order
+              </ButtonPrimary>
+            )}
             <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">
               <p className="block relative pl-5">
                 <svg

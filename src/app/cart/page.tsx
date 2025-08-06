@@ -1,12 +1,59 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { NoSymbolIcon, CheckIcon } from "@heroicons/react/24/outline";
 import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
-import { Product, PRODUCTS } from "@/data/data";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+
+interface CartItem {
+  productDetailId: string;
+  productName: string;
+  quantity: number;
+  size: string;
+  price: number;
+  imageUrls: string[];
+  color: string;
+}
 
 const CartPage = () => {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/cart", {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("token"),
+          },
+        });
+        if (response.data.code === 200) {
+          setCartItems(response.data.data);
+        } else {
+          console.error("Failed to fetch cart items");
+        }
+      } catch (error) {
+        console.error("Error fetching cart items:", error);
+      }
+    };
+
+    fetchCartItems();
+  }, []);
+
+  const handleQuantityChange = (index: number, newQuantity: number) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item, i) =>
+        i === index ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
   const renderStatusSoldout = () => {
     return (
       <div className="rounded-full flex items-center justify-center px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -25,8 +72,57 @@ const CartPage = () => {
     );
   };
 
-  const renderProduct = (item: Product, index: number) => {
-    const { image, price, name } = item;
+  // Add this function to handle item removal
+  const handleRemoveItem = async (productDetailId: string) => {
+    try {
+      // Call the API to remove the item from the cart
+      const response = await axios.delete(`http://localhost:8080/cart/${productDetailId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        }, 
+      });
+    
+      if (response.data.code === 200) {
+        // Remove the item from the local state
+        setCartItems(prevItems => prevItems.filter(item => item.productDetailId !== productDetailId));
+      
+        // Update localStorage orderData
+        const storedOrderData = localStorage.getItem("orderData");
+        if (storedOrderData) {
+          const orderData = JSON.parse(storedOrderData);
+          // Filter out the removed item
+          orderData.orderDetail = orderData.orderDetail.filter(
+            (item: any) => item.productDetailId !== productDetailId
+          );
+        
+          // Recalculate totals
+          const subtotal = orderData.orderDetail.reduce(
+            (total: number, item: any) => total + item.presentUnitPrice * item.quantity, 
+            0
+          );
+          const tax = subtotal * 0.1;
+          const total = subtotal + tax + 9000; // 9000 is shipping fee
+          
+          // Update the orderData with new values
+          orderData.tax = tax;
+          orderData.total = total;
+          
+          // Save back to localStorage
+          localStorage.setItem("orderData", JSON.stringify(orderData));
+        }
+      
+        console.log("Item removed successfully");
+      } else {
+        console.error("Failed to remove item from cart");
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+    }
+  };
+
+  const renderProduct = (item: CartItem, index: number) => {
+    const { productName, price, imageUrls, size, quantity } = item;
 
     return (
       <div
@@ -36,8 +132,8 @@ const CartPage = () => {
         <div className="relative h-36 w-24 sm:w-32 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
           <Image
             fill
-            src={image}
-            alt={name}
+            src={imageUrls[0]}
+            alt={productName}
             sizes="300px"
             className="h-full w-full object-contain object-center"
           />
@@ -49,88 +145,15 @@ const CartPage = () => {
             <div className="flex justify-between ">
               <div className="flex-[1.5] ">
                 <h3 className="text-base font-semibold">
-                  <Link href="/product-detail">{name}</Link>
+                  <Link href="/product-detail">{productName}</Link>
                 </h3>
                 <div className="mt-1.5 sm:mt-2.5 flex text-sm text-slate-600 dark:text-slate-300">
                   <div className="flex items-center space-x-1.5">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M7.01 18.0001L3 13.9901C1.66 12.6501 1.66 11.32 3 9.98004L9.68 3.30005L17.03 10.6501C17.4 11.0201 17.4 11.6201 17.03 11.9901L11.01 18.0101C9.69 19.3301 8.35 19.3301 7.01 18.0001Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeMiterlimit="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8.35 1.94995L9.69 3.28992"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeMiterlimit="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M2.07 11.92L17.19 11.26"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeMiterlimit="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M3 22H16"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeMiterlimit="10"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M18.85 15C18.85 15 17 17.01 17 18.24C17 19.26 17.83 20.09 18.85 20.09C19.87 20.09 20.7 19.26 20.7 18.24C20.7 17.01 18.85 15 18.85 15Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-
-                    <span>{`Black`}</span>
+                    <span>{`Size: ${size}`}</span>
                   </div>
                   <span className="mx-4 border-l border-slate-200 dark:border-slate-700 "></span>
                   <div className="flex items-center space-x-1.5">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M21 9V3H15"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M3 15V21H9"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M21 3L13.5 10.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M10.5 13.5L3 21"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-
-                    <span>{`2XL`}</span>
+                    <span>{`Quantity: ${quantity}`}</span>
                   </div>
                 </div>
 
@@ -139,14 +162,16 @@ const CartPage = () => {
                     name="qty"
                     id="qty"
                     className="form-select text-sm rounded-md py-1 border-slate-200 dark:border-slate-700 relative z-10 dark:bg-slate-800 "
+                    value={quantity} // Set value to quantity
+                    onChange={(e) =>
+                      handleQuantityChange(index, Number(e.target.value))
+                    } // Handle quantity change
                   >
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
                   </select>
                   <Prices
                     contentClass="py-1 px-2 md:py-1.5 md:px-2.5 text-sm font-medium h-full"
@@ -156,7 +181,11 @@ const CartPage = () => {
               </div>
 
               <div className="hidden sm:block text-center relative">
-                <NcInputNumber className="relative z-10" />
+                <NcInputNumber
+                  className="relative z-10"
+                  defaultValue={quantity}
+                  onChange={(value) => handleQuantityChange(index, value)}
+                />
               </div>
 
               <div className="hidden flex-1 sm:flex justify-end">
@@ -172,6 +201,10 @@ const CartPage = () => {
 
             <a
               href="##"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemoveItem(item.productDetailId);
+              }}
               className="relative z-10 flex items-center mt-3 font-medium text-primary-6000 hover:text-primary-500 text-sm "
             >
               <span>Remove</span>
@@ -180,6 +213,52 @@ const CartPage = () => {
         </div>
       </div>
     );
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + item.quantity * item.price, 0);
+  };
+
+  const subtotal = calculateSubtotal();
+  const shippingFee = 9000; // 9,000 VND
+  const tax = subtotal * 0.1;
+  const orderTotal = subtotal + tax + shippingFee;
+
+  const handleCheckout = () => {
+    const orderData = {
+      orderDetail: cartItems.map((item) => ({
+        productDetailId: item.productDetailId,
+        productName: item.productName,
+        quantity: item.quantity,
+        presentUnitPrice: item.price,
+        color: item.color,
+        imageUrls: item.imageUrls,
+        size: item.size,
+      })),
+      orderStatusHistory: null,
+      userInfo: {
+        fullName: "fullName",
+        phone: "phone",
+        address: "address",
+        postalCode: "postalCode",
+        city: "city",
+        country: "country",
+        province: "province",
+        apt: "apt",
+      },
+      date: new Date().toISOString(),
+      paymentMethod: "home",
+      status: "new",
+      shippingFee: 9000,
+      tax: tax,
+      discount: 0,
+      total: orderTotal,
+    };
+
+    console.log("orderData", orderData);
+    
+    localStorage.setItem("orderData", JSON.stringify(orderData));
+    router.push("/checkout");
   };
 
   return (
@@ -206,13 +285,7 @@ const CartPage = () => {
 
         <div className="flex flex-col lg:flex-row">
           <div className="w-full lg:w-[60%] xl:w-[55%] divide-y divide-slate-200 dark:divide-slate-700 ">
-            {[
-              PRODUCTS[0],
-              PRODUCTS[1],
-              PRODUCTS[2],
-              PRODUCTS[3],
-              PRODUCTS[4],
-            ].map(renderProduct)}
+            {cartItems.map(renderProduct)}
           </div>
           <div className="border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700 my-10 lg:my-0 lg:mx-10 xl:mx-16 2xl:mx-20 flex-shrink-0"></div>
           <div className="flex-1">
@@ -222,27 +295,27 @@ const CartPage = () => {
                 <div className="flex justify-between pb-4">
                   <span>Subtotal</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    $249.00
+                    {subtotal.toFixed(2)} VND
                   </span>
                 </div>
                 <div className="flex justify-between py-4">
-                  <span>Shpping estimate</span>
+                  <span>Shipping estimate</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    $5.00
+                    {shippingFee.toFixed(2)} VND
                   </span>
                 </div>
                 <div className="flex justify-between py-4">
                   <span>Tax estimate</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    $24.90
+                    {tax.toFixed(2)} VND
                   </span>
                 </div>
                 <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                   <span>Order total</span>
-                  <span>$276.00</span>
+                  <span>{orderTotal.toFixed(2)} VND</span>
                 </div>
               </div>
-              <ButtonPrimary href="/checkout" className="mt-8 w-full">
+              <ButtonPrimary onClick={handleCheckout} className="mt-8 w-full">
                 Checkout
               </ButtonPrimary>
               <div className="mt-5 text-sm text-slate-500 dark:text-slate-400 flex items-center justify-center">

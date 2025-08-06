@@ -29,7 +29,7 @@ export interface Product {
   id: number;
   name: string;
   price: number;
-  image: StaticImageData | string;
+  image: string[];
   description: string;
   category: string;
   tags: string[];
@@ -41,6 +41,7 @@ export interface Product {
   status?: "New in" | "limited edition" | "Sold Out" | "50% Discount";
   rating?: string;
   numberOfReviews?: number;
+  quantity: number;
 }
 
 const DEMO_VARIANTS: ProductVariant[] = [

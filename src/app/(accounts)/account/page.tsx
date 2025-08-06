@@ -1,13 +1,129 @@
+"use client"
+
 import Label from "@/components/Label/Label";
-import React, { FC } from "react";
+import React, { FC, useEffect, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Input from "@/shared/Input/Input";
 import Select from "@/shared/Select/Select";
 import Textarea from "@/shared/Textarea/Textarea";
 import { avatarImgs } from "@/contains/fakeData";
 import Image from "next/image";
+import axios from "axios";
+import { ACCOUNT_URL, UPLOAD_URL } from "@/data/navigation";
+import { useElements } from "@stripe/react-stripe-js";
+import { setEnvironmentData } from "worker_threads";
 
 const AccountPage = () => {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [birthday, setBirthday] = useState("");
+  const [description, setDescription] = useState("");
+  const [gender, setGender] = useState("");
+  const [image, setImage] = useState<File>();
+  const [imageSrc, setImageSrc] = useState("");
+
+
+  useEffect(() => {
+    axios.get(ACCOUNT_URL, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+    .then((response) => {
+      if (response.data && response.data.data) {
+        var data = response.data.data;
+        var code = response.data.code;
+        if (code == 200) {
+          console.log(data);
+          setEmail(data.email);          
+          if (data.userInfo) {
+            setFullName(data.userInfo.fullName);
+            setAddress(data.userInfo.address);
+            setPhone(data.userInfo.phone);
+            setBirthday(data.userInfo.birthday);
+            setDescription(data.userInfo.description);
+            setGender(data.userInfo.gender);
+            setImageSrc(UPLOAD_URL + "/" + data.userInfo.image);
+          }
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Lỗi khi gọi API:", error);
+    });
+  }, []);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const response = await axios.post(ACCOUNT_URL, {
+        email,
+        fullName,
+        address,
+        phone,
+        birthday,
+        description,
+        gender,
+        image
+    }, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    console.log(response);
+    if (response.data && response.data.data) {
+      var data = response.data.data;
+      var code = response.data.code;
+      if (code == 200) {
+        console.log(data);
+        if (data.userInfo) {
+          setImageSrc(UPLOAD_URL + "/" + data.userInfo.image);
+        }
+      }
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const {name, value} = e.target;
+    switch (name)
+    {
+      case "fullName":
+        setFullName(value);
+        break;
+      case "address":
+        setAddress(value);
+        break;
+      case "phone":
+        setPhone(value);
+        break;
+      case "birthday":
+        setBirthday(value);
+        break;
+      case "gender":
+        setGender(value);
+        break;
+      case "description":
+        setDescription(value);
+        break;
+      case "image":
+        const files = e.target.files;
+
+        if (files && files.length > 0) {
+          setImage(files[0]);
+        }
+        break;
+      default:
+        break;
+    }
+
+  };
+
   return (
     <div className={`nc-AccountPage `}>
       <div className="space-y-10 sm:space-y-12">
@@ -20,7 +136,7 @@ const AccountPage = () => {
             {/* AVATAR */}
             <div className="relative rounded-full overflow-hidden flex">
               <Image
-                src={avatarImgs[2]}
+                src={imageSrc}
                 alt="avatar"
                 width={128}
                 height={128}
@@ -48,13 +164,16 @@ const AccountPage = () => {
               <input
                 type="file"
                 className="absolute inset-0 opacity-0 cursor-pointer"
+                name="image"
+                onChange={handleChange}
               />
             </div>
           </div>
           <div className="flex-grow mt-10 md:mt-0 md:pl-16 max-w-3xl space-y-6">
+            <form onSubmit={handleSubmit}>
             <div>
               <Label>Full name</Label>
-              <Input className="mt-1.5" defaultValue="Enrico Cole" />
+              <Input className="mt-1.5" name="fullName" value={fullName} onChange={handleChange}/>
             </div>
 
             {/* ---- */}
@@ -69,6 +188,8 @@ const AccountPage = () => {
                 <Input
                   className="!rounded-l-none"
                   placeholder="example@email.com"
+                  name="email"
+                  defaultValue={email}
                 />
               </div>
             </div>
@@ -83,7 +204,9 @@ const AccountPage = () => {
                 <Input
                   className="!rounded-l-none"
                   type="date"
-                  defaultValue="1990-07-22"
+                  value={birthday}
+                  name="birthday"
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -96,7 +219,9 @@ const AccountPage = () => {
                 </span>
                 <Input
                   className="!rounded-l-none"
-                  defaultValue="New york, USA"
+                  name="address"
+                  value={address}
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -104,7 +229,7 @@ const AccountPage = () => {
             {/* ---- */}
             <div>
               <Label>Gender</Label>
-              <Select className="mt-1.5">
+              <Select className="mt-1.5" name="gender" value={gender} onChange={handleChange}>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
@@ -118,17 +243,19 @@ const AccountPage = () => {
                 <span className="inline-flex items-center px-2.5 rounded-l-2xl border border-r-0 border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-sm">
                   <i className="text-2xl las la-phone-volume"></i>
                 </span>
-                <Input className="!rounded-l-none" defaultValue="003 888 232" />
+                <Input className="!rounded-l-none" name="phone" onChange={handleChange}
+                  defaultValue={phone} />
               </div>
             </div>
             {/* ---- */}
             <div>
               <Label>About you</Label>
-              <Textarea className="mt-1.5" defaultValue="..." />
+              <Textarea className="mt-1.5" name="description" value={description} onChange={handleChange}/>
             </div>
             <div className="pt-2">
-              <ButtonPrimary>Update account</ButtonPrimary>
+              <ButtonPrimary type="submit">Update account</ButtonPrimary>
             </div>
+            </form>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import React, { FC } from "react";
+"use client";
+import React, { FC, useState } from "react";
 import facebookSvg from "@/images/Facebook.svg";
 import twitterSvg from "@/images/Twitter.svg";
 import googleSvg from "@/images/Google.svg";
@@ -6,26 +7,118 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
 import Link from "next/link";
+import axios from 'axios';
+import { BACKEND_BASE_URL, OAUTH2_URL_FACEBOOK } from "@/data/navigation";
+
+interface SocialLoginResponse {
+  code: number;
+  message: string | null;
+  data: string;
+}
 
 const loginSocials = [
   {
     name: "Continue with Facebook",
-    href: "#",
+    href: "",
     icon: facebookSvg,
+    type: "facebook",
   },
   {
     name: "Continue with Twitter",
     href: "#",
     icon: twitterSvg,
+    type: "twitter",
   },
   {
     name: "Continue with Google",
     href: "#",
     icon: googleSvg,
+    type: "google",
   },
 ];
 
+const callSocialSignup = async (type: string): Promise<void> => {
+  try {
+    // Store loginType in localStorage before redirect
+    localStorage.setItem('socialLoginType', type);
+
+    // const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || BACKEND_BASE_URL;
+    const SOCIAL_AUTH_ENDPOINT = `${OAUTH2_URL_FACEBOOK}?loginType=`;
+    const response = await axios.get<SocialLoginResponse>(
+      `${SOCIAL_AUTH_ENDPOINT}${type}`,
+      {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const result = response.data;
+    
+    if (result.code === 200 && result.data) {
+      // Append loginType parameter to Facebook URL
+      const fbUrl = new URL(result.data);
+      
+      // Redirect to modified Facebook OAuth URL
+      window.location.href = fbUrl.toString();
+    }
+  } catch (error) {
+    console.error('Failed to initiate social login:', error);
+  }
+}
+
 const PageSignUp = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("http://localhost:8080/register", {
+        email,
+        password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 200) {
+        // Handle successful registration (e.g., redirect to login page)
+
+        console.log("Registration successful");
+        // Show success toast or notification
+        // Show success toast
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+        notification.textContent = 'Registration successful!';
+        document.body.appendChild(notification);
+        
+        // Remove notification after 2 seconds
+        setTimeout(() => {
+          notification.remove();
+        }, 2000);
+        // Redirect to login page
+        window.location.href = "/login";
+      } else {
+        // Handle registration error
+        console.error("Registration failed");
+        // Show error notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+        notification.textContent = 'Registration failed. Please try again.';
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error during registration:", error);
+    }
+  };
+
   return (
     <div className={`nc-PageSignUp `} data-nc-id="PageSignUp">
       <div className="container mb-24 lg:mb-32">
@@ -38,6 +131,10 @@ const PageSignUp = () => {
               <a
                 key={index}
                 href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  callSocialSignup(item.type);
+                }}
                 className=" flex w-full rounded-lg bg-primary-50 dark:bg-neutral-800 px-4 py-3 transform transition-transform sm:px-6 hover:translate-y-[-2px]"
               >
                 <Image
@@ -60,7 +157,7 @@ const PageSignUp = () => {
             <div className="absolute left-0 w-full top-1/2 transform -translate-y-1/2 border border-neutral-100 dark:border-neutral-800"></div>
           </div>
           {/* FORM */}
-          <form className="grid grid-cols-1 gap-6" action="#" method="post">
+          <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
             <label className="block">
               <span className="text-neutral-800 dark:text-neutral-200">
                 Email address
@@ -69,13 +166,20 @@ const PageSignUp = () => {
                 type="email"
                 placeholder="example@example.com"
                 className="mt-1"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </label>
             <label className="block">
               <span className="flex justify-between items-center text-neutral-800 dark:text-neutral-200">
                 Password
               </span>
-              <Input type="password" className="mt-1" />
+              <Input
+                type="password"
+                className="mt-1"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </label>
             <ButtonPrimary type="submit">Continue</ButtonPrimary>
           </form>
