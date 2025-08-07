@@ -1,6 +1,6 @@
 # ⚠️ **Important Notice**
 - This is a **front-end eCommerce template** built using **TypeScript**, **React**, and **Next.js**.
-- We've made several modifications to better align the front-end with our custom [`back-end service`](https://github.com/huypq02/ecommerce-java), which is developed in Java.
+- We've made several modifications to better align the front-end with our custom [back-end service](https://github.com/huypq02/ecommerce-java), which is developed in Java.
 - We genuinely appreciate your interest and support. Contributions and feedback are always welcome!
 
 # 🧱 Ciseco Next.js Starter
