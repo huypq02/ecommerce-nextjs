@@ -1,11 +1,11 @@
 # ⚠️ **Important Notice**
 - This is a **front-end eCommerce template** built using **TypeScript**, **React**, and **Next.js**.
-- We've made several modifications to better align the front-end with our custom [back-end service](https://github.com/huypq02/ecommerce-java), which is developed in Java.
+- We've made several modifications to better align the front-end with our custom [`back-end service`](https://github.com/huypq02/ecommerce-java), which is developed in Java.
 - We genuinely appreciate your interest and support. Contributions and feedback are always welcome!
 
 # 🧱 Ciseco Next.js Starter
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with `[create-next-app](https://github.com/vercel/next.js/tree/canary/packages/create-next-app)`.
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ---
 
@@ -47,7 +47,7 @@ This project includes a sample API endpoint:
 
 ## 🎨 Fonts & Optimization
 
-This project uses `[next/font](https://nextjs.org/docs/basic-features/font-optimization)` for automatic font optimization.
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) for automatic font optimization.
 The default font is **Inter**, a sleek Google Font optimized for web.
 
 ---
