@@ -5,7 +5,7 @@
 
 # 🧱 Ciseco Next.js Starter
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with `[create-next-app]`(https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is a [Next.js](https://nextjs.org/) project bootstrapped with `[create-next-app](https://github.com/vercel/next.js/tree/canary/packages/create-next-app)`.
 
 ---
 
@@ -47,7 +47,7 @@ This project includes a sample API endpoint:
 
 ## 🎨 Fonts & Optimization
 
-This project uses [`[next/font]`](https://nextjs.org/docs/basic-features/font-optimization) for automatic font optimization.
+This project uses [`[next/font](https://nextjs.org/docs/basic-features/font-optimization)`] for automatic font optimization.
 The default font is **Inter**, a sleek Google Font optimized for web.
 
 ---
@@ -66,7 +66,7 @@ To explore more about Next.js, check out the following resources:
 
 The easiest way to deploy your Next.js app is through **Vercel** — the creators of Next.js.
 
-🔗 [Deploy to Vercel(https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
+🔗 [Deploy to Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
 
 📦 See the [Next.js Deployment Docs](https://nextjs.org/docs/deployment) for more configuration options.
 
