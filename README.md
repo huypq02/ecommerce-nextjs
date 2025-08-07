@@ -47,7 +47,7 @@ This project includes a sample API endpoint:
 
 ## 🎨 Fonts & Optimization
 
-This project uses [`[next/font](https://nextjs.org/docs/basic-features/font-optimization)`] for automatic font optimization.
+This project uses `[next/font](https://nextjs.org/docs/basic-features/font-optimization)` for automatic font optimization.
 The default font is **Inter**, a sleek Google Font optimized for web.
 
 ---
